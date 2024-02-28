@@ -1,0 +1,30 @@
+{
+    "name": "stero/php-mvc",
+    "description": "PHP MVP template",
+    "type": "project",
+    "require": {
+        "php": "^8.2",
+        "vlucas/phpdotenv": "^5.6",
+        "phpmailer/phpmailer": "^6.9",
+        "doctrine/dbal": "^4.0",
+        "doctrine/orm": "^3.0",
+        "ext-pdo": "*",
+      "ext-http": "*",
+        "robmorgan/phinx": "^0.16.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.10",
+        "friendsofphp/php-cs-fixer": "^3.50"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Stero tECH",
+            "email": "agyeisterogh@gmail.com"
+        }
+    ],
+    "scripts": {
+        "analyse": "vendor/bin/phpstan",
+        "format": "vendor/bin/php-cs-fixer fix --allow-risky=yes"
+    }
+}

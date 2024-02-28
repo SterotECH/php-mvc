@@ -1,0 +1,210 @@
+#!/usr/bin/env php
+<?php
+
+/*
+ * --------------------------------------------------------------------
+ * Stero MVC command-line tools
+ * --------------------------------------------------------------------
+ * The main entry point into the CLI system and allows you to run
+ * commands and perform maintenance on your application.
+ *
+ * Because Stero MVC can handle CLI requests as just another web request
+ * this class mainly acts as a pass thru to the framework itself.
+ */
+
+use Dotenv\Dotenv;
+use Utils\Database;
+
+const BASE_PATH = __DIR__ ;
+
+require 'app/Utils/utils.php';
+require base_path('/vendor/autoload.php');
+
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+require 'app/Utils/Database.php';
+
+$commands = [
+    'make:migration' => 'makeMigration',
+    'migrate' => 'migrate',
+    'refresh' => 'refresh',
+    'db:down' => 'down',
+    'db:alter' => 'alterTableCommand',
+];
+
+$command = $argv[1] ?? '';
+$arguments = array_slice($argv, 2);
+
+if (isset($commands[$command])) {
+    $method = $commands[$command];
+    call_user_func_array($method, $arguments);
+} else {
+    echo "Command not found.\n";
+}
+
+function makeMigration($migrationName): void
+{
+    $timestamp = date('Ymd_His');
+    $className = 'Migration_'. $timestamp . '_' . ucfirst($migrationName);
+
+    $migrationsDir = base_path('/app/Database/migrations');
+    if (!file_exists($migrationsDir)) {
+        mkdir($migrationsDir, 0777, true);
+    }
+    $migrationFile = $migrationsDir . '/' . $className . '.php';
+    $id = env('DB_CONNECTION') === 'pgsql' ? 'id SERIAL PRIMARY KEY': 'id INT AUTO_INCREMENT PRIMARY KEY' ;
+    $content = <<<PHP
+<?php
+    
+class $className
+{
+    function up(): string
+    {
+         return "CREATE TABLE IF NOT EXISTS $migrationName (
+                    $id,
+                   -- add your table definition here
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    --  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )";
+    }
+
+    function down(): string
+    {
+        return "DROP TABLE $migrationName";
+    }
+}
+PHP;
+
+    file_put_contents($migrationFile, $content);
+
+    $migrationsFile = $migrationsDir . '/migrations.php';
+    if (!file_exists($migrationsFile)) {
+        file_put_contents($migrationsFile, '<?php return [];');
+    }
+    $migrations = include $migrationsFile;
+    $migrations[$className] = 'unapplied';
+    file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';');
+
+    echo "\033[0;32mMigration created:\033[0m $migrationFile";
+}
+
+function migrate(): void
+{
+    $migrationsFile = base_path('/app/Database/migrations/migrations.php');
+    $migrations = include $migrationsFile;
+    $migrationsDir = base_path('/app/Database/migrations');
+
+    // Create migration table if it doesn't exist
+    $database = new Database();
+    $id = env('DB_CONNECTION') === 'pgsql' ? 'id SERIAL PRIMARY KEY' : 'id INT AUTO_INCREMENT PRIMARY KEY' ;
+    $database->query("CREATE TABLE IF NOT EXISTS migrations (
+        $id,
+        migration VARCHAR(255) NOT NULL,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    foreach ($migrations as $className => $status) {
+        if ($status === 'unapplied') {
+            // Include and run the migration class
+            include $migrationsDir . '/' . $className . '.php';
+            $migration = new $className();
+            $database->query($migration->up());
+            $database->query("INSERT INTO migrations (migration) VALUES ('$className')");
+            $migrations[$className] = 'applied'; // Update status
+            file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';');
+            echo "\033[0;32mApplied migration:\033[0m $className\n";
+        }
+    }
+
+    echo "\033[0;32mAll migrations applied.\033[0m\n";
+}
+
+function refresh(): void
+{
+    echo "Database refreshed.\n";
+}
+
+function down(): void
+{
+    $migrationsFile = base_path('/app/Database/migrations/migrations.php');
+    $migrations = include $migrationsFile;
+    $migrationsDir = base_path('/app/Database/migrations');
+
+    // Delete tables in reverse order of application
+    $appliedMigrations = array_reverse($migrations);
+    foreach ($appliedMigrations as $className => $status) {
+        if ($status === 'applied') {
+            include $migrationsDir . '/' . $className . '.php';
+            $migration = new $className();
+            $database = new Database();
+            $database->query($migration->down());
+            $database->query("DELETE FROM migrations WHERE migration = '$className'");
+            $migrations[$className] = 'unapplied'; // Update status
+            file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';');
+            echo "\033[0;32mReverted migration:\033[0m $className\n";
+        }
+    }
+
+    echo "\033[0;32mAll migrations reverted.\033[0m\n";
+}
+
+function alterTableCommand($tableName, $alterationType, $columnDetails): void
+{
+    alterTable($tableName, $alterationType, $columnDetails);
+}
+
+function alterTable($tableName, $alterationType, $columnDetails): void
+{
+    $timestamp = date('Ymd_His');
+    $className = 'AlterTable_' . $timestamp . '_' . ucfirst($tableName);
+
+    $migrationsDir = base_path('/app/Database/migrations');
+    if (!file_exists($migrationsDir)) {
+        mkdir($migrationsDir, 0777, true);
+    }
+
+    $migrationFile = $migrationsDir . '/' . $className . '.php';
+
+    $data = match ($alterationType) {
+        'add_column' => "ALTER TABLE $tableName ADD COLUMN $columnDetails",
+        'drop_column' => "ALTER TABLE $tableName DROP COLUMN $columnDetails",
+        'rename_column' => "ALTER TABLE $tableName RENAME COLUMN $columnDetails",
+        'change_fieldtype' => "ALTER TABLE $tableName ALTER COLUMN $columnDetails",
+        'change_field_size' => "ALTER TABLE $tableName ALTER COLUMN $columnDetails",
+        'add_constraint' =>  "ALTER TABLE $tableName ADD CONSTRAINT $columnDetails",
+        default => "ALTER TABLE $tableName",
+    };
+
+    $content = <<<PHP
+<?php
+class $className {
+    function up()
+    {
+        return "$data";
+    }
+
+    function down(\$db): void
+    {
+        // Define down method to revert the alterations if needed
+    }
+}
+PHP;
+
+    file_put_contents($migrationFile, $content);
+
+    $migrationsFile = $migrationsDir . '/migrations.php';
+    if (!file_exists($migrationsFile)) {
+        file_put_contents($migrationsFile, '<?php return [];');
+    }
+    $migrations = include $migrationsFile;
+    $migrations[$className] = 'unapplied';
+
+    file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';');
+
+    echo "\033[0;32mAlteration migration created:\033[0m $migrationFile\n";
+}
+
+?>
+
