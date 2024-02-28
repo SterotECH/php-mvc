@@ -3,4 +3,5 @@
   'Migration_20240227_233424_Notes' => 'applied',
   'AlterTable_20240228_002445_Notes' => 'applied',
   'AlterTable_20240228_002642_Notes' => 'applied',
+  'Migration_20240228_004524_Blog' => 'unapplied',
 );
