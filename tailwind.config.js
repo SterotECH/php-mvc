@@ -1,8 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-      './resources/views/**/*.{html, php, js}',
-      './public/index.php'
+    './resources/views/**/*.{html, php, js}',
+    './resources/views/**/*.php',
+    './public/index.php'
   ],
   darkMode: 'class',
   theme: {
@@ -25,7 +26,9 @@ module.exports = {
   variants: {
     extend: {},
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 }
 
 

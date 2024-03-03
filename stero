@@ -12,21 +12,27 @@
  * this class mainly acts as a pass thru to the framework itself.
  */
 
+use App\Command\SeederCommand;
 use Dotenv\Dotenv;
-use Commands\MigrationCommand;
-use Commands\AlterationCommand;
+use App\Command\MigrationCommand;
+use App\Command\AlterationCommand;
 
 const BASE_PATH = __DIR__ ;
 
-require 'app/Utils/utils.php';
+require 'app/Core/utils.php';
 require base_path('/vendor/autoload.php');
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-require 'app/Utils/Database.php';
-require 'app/Command/AlterationCommand.php';
-require 'app/Command/MigrationCommand.php';
+spl_autoload_register(function ($class) {
+    $classPath = str_replace('\\', DIRECTORY_SEPARATOR, $class) . '.php';
+    $classFile = base_path("$classPath");
+
+    if (file_exists($classFile)) {
+        require $classFile;
+    }
+});
 
 $commands = [
     'make:migration' => [MigrationCommand::class, 'makeMigration'],
@@ -34,6 +40,9 @@ $commands = [
     'refresh' => [MigrationCommand::class, 'refresh'],
     'db:down' => [MigrationCommand::class, 'down'],
     'db:alter' => [AlterationCommand::class, 'alterTable'],
+    'db:status' => [MigrationCommand::class, 'status'],
+    'delete:migration' => [MigrationCommand::class, 'deleteMigration'],
+    'make:seeder' => [SeederCommand::class, 'makeSeeder'],
 ];
 
 $command = $argv[1] ?? '';
@@ -44,9 +53,9 @@ if (empty($command)) {
     foreach ($commands as $cmd => $handler) {
         echo "- $cmd\n";
     }
-} else {
+} else{
     $matchedCommands = array_filter(array_keys($commands), function ($cmd) use ($command) {
-        return strpos($cmd, $command) === 0;
+        return str_starts_with($cmd, $command);
     });
 
     if (count($matchedCommands) === 1) {
@@ -54,12 +63,26 @@ if (empty($command)) {
         [$class, $method] = $commands[$matchedCommand];
         $class::$method(...$arguments);
     } elseif (count($matchedCommands) > 1) {
-        echo "Did you mean one of these commands?\n";
+        echo "Multiple matching commands found. Please select one:\n";
+        $index = 0;
+        $indexedCommands = [];
         foreach ($matchedCommands as $cmd) {
-            echo "- $cmd\n";
+            $indexedCommands[$index] = $cmd;
+            echo "[$index] $cmd\n";
+            $index++;
+        }
+        echo "Enter the number corresponding to the command: ";
+        $selected = (int) readline();
+        $selectedCommand = $indexedCommands[$selected] ?? null;
+        if ($selectedCommand) {
+            [$class, $method] = $commands[$selectedCommand];
+            $class::$method(...$arguments);
+        } else {
+            echo "Invalid selection.\n";
         }
     } else {
         echo "Command not found.\n";
     }
 }
+
 

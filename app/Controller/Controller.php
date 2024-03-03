@@ -2,7 +2,16 @@
 
 namespace App\Controller;
 
+use App\Core\Database;
+
 class Controller {
+
+    public Database $db;
+
+    public function __construct()
+    {
+        $this->db = Database::getInstance();
+    }
 
     /**
      * @param string $view
@@ -11,9 +20,13 @@ class Controller {
      */
     protected function render(string $view, array $data = []): void
     {
-        extract($data);
+        $view = strtok($view, '?');
 
-        require base_path('resources/views/' . $view . '.php');
+        if (!empty($data)) {
+            extract($data);
+        }
+
+        require base_path("resources/views/{$view}.view.php");
 
     }
 }

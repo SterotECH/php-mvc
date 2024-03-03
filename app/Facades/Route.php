@@ -1,5 +1,7 @@
 <?php
 
+use App\Core\Router;
+
 class Route
 {
     protected static Router $router;

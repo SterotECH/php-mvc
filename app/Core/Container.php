@@ -1,6 +1,6 @@
 <?php
 
-namespace Utils;
+namespace App\Core;
 
 use Exception;
 

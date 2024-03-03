@@ -1,6 +1,9 @@
 <?php
 
-namespace Commands;
+namespace App\Command;
+
+
+use App\Core\Database;
 
 class MigrationCommand
 {
@@ -58,7 +61,7 @@ PHP;
         $migrationsDir = base_path('/app/Database/migrations');
 
         // Create migration table if it doesn't exist
-        $database = new Database();
+        $database = Database::getInstance();
         $id = env('DB_CONNECTION') === 'pgsql' ? 'id SERIAL PRIMARY KEY' : 'id INT AUTO_INCREMENT PRIMARY KEY';
         $database->query("CREATE TABLE IF NOT EXISTS migrations (
         $id,
@@ -82,12 +85,12 @@ PHP;
         echo "\033[0;32mAll migrations applied.\033[0m\n";
     }
 
-    public function refresh(): void
+    public static function refresh(): void
     {
         echo "Database refreshed.\n";
     }
 
-    public function down(): void
+    public static function down(): void
     {
         $migrationsFile = base_path('/app/Database/migrations/migrations.php');
         $migrations = include $migrationsFile;
@@ -99,7 +102,7 @@ PHP;
             if ($status === 'applied') {
                 include $migrationsDir . '/' . $className . '.php';
                 $migration = new $className();
-                $database = new Database();
+                $database = Database::getInstance();
                 $database->query($migration->down());
                 $database->query("DELETE FROM migrations WHERE migration = '$className'");
                 $migrations[$className] = 'unapplied'; // Update status
@@ -109,6 +112,73 @@ PHP;
         }
 
         echo "\033[0;32mAll migrations reverted.\033[0m\n";
+    }
+
+    public static function status(): void
+    {
+        $migrationsFile = base_path('/app/Database/migrations/migrations.php');
+        $migrations = include $migrationsFile;
+
+        foreach ($migrations as $className => $status) {
+            if ($status === 'applied') {
+                echo "[✓] $className\n";
+            } else {
+                echo "\033[31m[ ]\033[0m $className\n";
+            }
+        }
+    }
+
+   public static function deleteMigration(): void
+    {
+        $migrationsFile = base_path('/app/Database/migrations/migrations.php');
+        $migrations = include $migrationsFile;
+        $migrationsDir = base_path('/app/Database/migrations');
+
+        echo "Available migrations:\n";
+        foreach ($migrations as $migrationNumber => $status) {
+            $statusColor = $status === 'applied' ? "\033[0;32m" : "\033[0;31m";
+            $statusMark = $status === 'applied' ? '√' : ' ';
+            echo "[$statusColor$statusMark\033[0m]  $migrationNumber\n";
+        }
+
+        echo "Enter the migrations to delete (comma-separated): ";
+        $input = trim(fgets(STDIN));
+        $selectedMigrations = explode(',', $input);
+
+        foreach ($selectedMigrations as $selectedMigration) {
+            if (isset($migrations[trim($selectedMigration)])) {
+                $migrationName = $migrations[$selectedMigration];
+
+                if ($migrationName === 'applied') {
+                    $database = Database::getInstance();
+
+                    $migrationFile = $migrationsDir . '/' . $selectedMigration . '.php';
+                    include_once $migrationFile;
+
+                    $className = basename($migrationFile, '.php');
+                    $migration = new $className();
+
+                    $migration->down();
+
+                    $database->query("DELETE FROM migrations WHERE migration = '$selectedMigration'");
+
+                    $migrations[$selectedMigration] = 'unapplied';
+
+                    echo "\033[0;32mUndone and deleted migration:\033[0m $selectedMigration\n";
+                }
+
+                $migrationFile = $migrationsDir . '/' . $selectedMigration . '.php';
+                unlink($migrationFile);
+
+                unset($migrations[$selectedMigration]);
+
+                echo "\033[0;32mDeleted migration:\033[0m $selectedMigration\n";
+            } else {
+                echo "\033[0;31mMigration not found:\033[0m $selectedMigration\n";
+            }
+        }
+
+        file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';');
     }
 
 }

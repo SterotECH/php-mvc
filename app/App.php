@@ -1,7 +1,8 @@
 <?php
 
-namespace Utils;
+namespace App;
 
+use App\Core\Container;
 use Exception;
 
 class App
@@ -19,7 +20,7 @@ class App
     }
 
 
-    public static function resolve(string $key)
+    public static function resolve(string $key): void
     {
         static::container()->resolve($key);
     }

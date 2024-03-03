@@ -1,8 +1,9 @@
 {
   "scripts": {
-    "build:css": "postcss input.css -o public/css/styles.css"
+    "build:css": "postcss input.css -o public/css/styles.css -w"
   },
   "devDependencies": {
+    "@tailwindcss/forms": "^0.5.7",
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.35",
     "postcss-cli": "^11.0.0",

@@ -1,6 +1,6 @@
 <?php
 
-namespace Commands;
+namespace App\Command;
 
 class AlterationCommand
 {
@@ -21,6 +21,7 @@ class AlterationCommand
             'drop_column' => "ALTER TABLE $tableName DROP COLUMN $columnDetails",
             'rename_column' => "ALTER TABLE $tableName RENAME COLUMN $columnDetails",
             'change_fieldtype', 'change_field_size' => "ALTER TABLE $tableName ALTER COLUMN $columnDetails",
+            'modify_field' => "ALTER TABLE $tableName MODIFY $columnDetails",
             'add_constraint' =>  "ALTER TABLE $tableName ADD CONSTRAINT $columnDetails",
             default => "ALTER TABLE $tableName",
         };

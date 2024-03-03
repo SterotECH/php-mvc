@@ -1,13 +1,13 @@
 <?php
 
-use Utils\App;
-use Utils\Container;
-use Utils\Database;
+use App\App;
+use App\Core\Container;
+use App\Core\Database;
 
 $container = new Container();
 
 $container->bind(Database::class, function (){
-    return new Database();
+    return Database::getInstance();
 });
 
 App::setContainer($container);

@@ -1,6 +1,9 @@
 <?php
 
-namespace Utils;
+namespace App\Core;
+
+ use App\Interface\ResponseInterface;
+ use JetBrains\PhpStorm\NoReturn;
 
  class Response {
     const HTTP_CONTINUE = 100;
@@ -81,7 +84,7 @@ namespace Utils;
             self::HTTP_USE_PROXY => "Use Proxy",
             self::HTTP_TEMPORARY_REDIRECT => "Temporary Redirect",
             self::HTTP_PERMANENT_REDIRECT => "Permanent Redirect",
-            self::HTTP_BAD_REQUEST => "Bad Request",
+            self::HTTP_BAD_REQUEST => "Bad RequestInterface",
             self::HTTP_UNAUTHORIZED => "Unauthorized",
             self::HTTP_PAYMENT_REQUIRED => "Payment Required",
             self::HTTP_FORBIDDEN => "Forbidden",
@@ -89,7 +92,7 @@ namespace Utils;
             self::HTTP_METHOD_NOT_ALLOWED => "Method Not Allowed",
             self::HTTP_NOT_ACCEPTABLE => "Not Acceptable",
             self::HTTP_PROXY_AUTHENTICATION_REQUIRED => "Proxy Authentication Required",
-            self::HTTP_REQUEST_TIMEOUT => "Request Timeout",
+            self::HTTP_REQUEST_TIMEOUT => "RequestInterface Timeout",
             self::HTTP_CONFLICT => "Conflict",
             self::HTTP_GONE => "Gone",
             self::HTTP_LENGTH_REQUIRED => "Length Required",
@@ -100,7 +103,7 @@ namespace Utils;
             self::HTTP_RANGE_NOT_SATISFIABLE => "Range Not Satisfiable",
             self::HTTP_EXPECTATION_FAILED => "Expectation Failed",
             self::HTTP_IM_A_TEAPOT => "I'm a teapot",
-            self::HTTP_MISDIRECTED_REQUEST => "Misdirected Request",
+            self::HTTP_MISDIRECTED_REQUEST => "Misdirected RequestInterface",
             self::HTTP_UNPROCESSABLE_ENTITY => "Unprocessable Entity",
             self::HTTP_LOCKED => "Locked",
             self::HTTP_FAILED_DEPENDENCY => "Failed Dependency",
@@ -108,7 +111,7 @@ namespace Utils;
             self::HTTP_UPGRADE_REQUIRED => "Upgrade Required",
             self::HTTP_PRECONDITION_REQUIRED => "Precondition Required",
             self::HTTP_TOO_MANY_REQUESTS => "Too Many Requests",
-            self::HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE => "Request Header Fields Too Large",
+            self::HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE => "RequestInterface Header Fields Too Large",
             self::HTTP_UNAVAILABLE_FOR_LEGAL_REASONS => "Unavailable For Legal Reasons",
             self::HTTP_INTERNAL_SERVER_ERROR => "Internal Server Error",
             self::HTTP_NOT_IMPLEMENTED => "Not Implemented",
@@ -124,4 +127,85 @@ namespace Utils;
             default => "Unknown",
         };
     }
+
+     private array $data = [];
+
+     /**
+      * @param array $data
+      * @param int $status
+      * @return string
+      */
+     public function json(array $data, int $status = self::HTTP_OK): string
+     {
+         header("Content-type:application/json");
+         http_response_code($status);
+         return json_encode($data);
+     }
+
+     /**
+      * @param string $data
+      * @param int $status
+      * @return string
+      */
+     public function plainText(string $data, int $status = self::HTTP_OK): string
+     {
+         header("Content-Type:text/plain;charset=UTF-8");
+         http_response_code($status);
+         return $data;
+     }
+
+     /**
+      * @param string $data
+      * @param int $status
+      * @return string
+      */
+     public function plainHtml(string $data, int $status = self::HTTP_OK): string
+     {
+         header("Content-Type:text/html;charset=UTF-8");
+         http_response_code($status);
+         return $data;
+     }
+
+     /**
+      * @param string $url
+      * @param int $status
+      * @return void
+      */
+     #[NoReturn] public function redirect(string $url, int $status = self::HTTP_MOVED_PERMANENTLY): void
+     {
+         header("Location:{$url}");
+         http_response_code($status);
+         exit();
+     }
+
+     /**
+      * @param array $data
+      * @param int $status
+      * @return Response
+      */
+     public function withErrors(array $data, int $status = self::HTTP_UNPROCESSABLE_ENTITY): Response
+     {
+         http_response_code($status);
+         $this->data = [...$data];
+
+         return $this;
+     }
+
+     /**
+      * @return string
+      *
+      */
+     public function toJson(): string
+     {
+         header("Content-type:application/json");
+         return json_encode($this->data);
+     }
+
+     /**
+      * @return array
+      */
+     public function getResponseData(): array
+     {
+         return $this->data;
+     }
 }

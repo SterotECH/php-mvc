@@ -5,7 +5,7 @@ class Migration_20240227_225132_User
     function up(): string
     {
          return "CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
+                    id INT PRIMARY KEY,
                     username VARCHAR(16) NOT NULL UNIQUE,
                     first_name VARCHAR(100) NOT NULL,
                     last_name VARCHAR(100) NOT NULL,
