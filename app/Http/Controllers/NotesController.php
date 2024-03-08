@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 class NotesController extends Controller
 {
@@ -8,7 +8,7 @@ class NotesController extends Controller
     {
         $notes = [];
 
-        $this->render('notes.index', ['notes' => $notes]);
+        $this->render('notes/index', ['notes' => $notes]);
     }
 
     public function create(): void

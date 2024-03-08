@@ -32,7 +32,7 @@ class Database
 
         try {
             $this->connection = new PDO($dns, $driverConfig['username'], $driverConfig['password'], [
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
@@ -52,12 +52,13 @@ class Database
     }
 
     /**
-     * @param string $sql
-     * @param array|null $params
-     * @param array|null $hiddenColumns
-     * @return Database
+     * Execute a SQL query.
+     *
+     * @param string $sql The SQL query to execute.
+     * @param array|null $params The parameters to bind to the query.
+     * @return static
      */
-    public function query(string $sql, array $params = null, array $hiddenColumns = null): static
+    public function query(string $sql, array $params = null): static
     {
         $this->statement = $this->connection->prepare($sql);
         $this->statement->execute($params);
@@ -65,34 +66,57 @@ class Database
         return $this;
     }
 
-
-    public function findOrFail(): mixed
+    /**
+     * Fetch the next row from the result set.
+     *
+     * @return object|false The next row as an object, or false if no more rows are available.
+     */
+    public function find(): object|bool
     {
-        $result = $this->find();
-        if (!$result) {
-            abort();
-        }
-
-        return $result;
+        return $this->statement->fetch(PDO::FETCH_OBJ);
     }
 
-
-    public function find()
-    {
-        return $this->statement->fetch();
-    }
-
-
-    public function findAll()
+    /**
+     * Fetch all rows from the result set.
+     *
+     * @return array|false An array of rows as objects, or false if there are no rows.
+     */
+    public function findAll(): array|bool
     {
         return $this->statement->fetchAll();
     }
 
-    public function rowCount(): int
+    /**
+     * Fetch the next row from the result set or return null if not found.
+     *
+     * @return object|null The next row as an object, or null if no more rows are available.
+     */
+    public function findOrFail(): ?object
     {
-        return count($this->findAll());
+        $result = $this->find();
+        if (!$result) {
+            return null;
+        }
+        return $result;
     }
 
+
+    /**
+     * Get the number of rows affected by the last SQL statement.
+     *
+     * @return int The number of rows.
+     */
+    public function rowCount(): int
+    {
+        return $this->statement->rowCount();
+    }
+
+    /**
+     * Get the ID of the last inserted row or sequence value.
+     *
+     * @param string|null $name Name of the sequence object from which the ID should be returned.
+     * @return string The ID of the last inserted row.
+     */
     public function lastInsertId(string $name = null): string
     {
         return $this->connection->lastInsertId($name);

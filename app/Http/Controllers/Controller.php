@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Http\Controllers;
 
 use App\Core\Database;
 
@@ -20,13 +20,16 @@ class Controller {
      */
     protected function render(string $view, array $data = []): void
     {
-        $view = strtok($view, '?');
+        $viewFilePath = base_path("resources/views/$view.view.php");
+
+        if (!file_exists($viewFilePath)) {
+            abort(description: "resources/views/$view.view.php do not exist");
+        }
 
         if (!empty($data)) {
             extract($data);
         }
 
-        require base_path("resources/views/{$view}.view.php");
-
+        require $viewFilePath;
     }
 }

@@ -2,8 +2,7 @@
 
 namespace App\Core;
 
-use App\Interface\MiddlewareInterface;
-use Dotenv\Dotenv;
+use App\Core\Interface\MiddlewareInterface;
 use Exception;
 
 class Router

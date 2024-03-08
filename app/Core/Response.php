@@ -2,7 +2,6 @@
 
 namespace App\Core;
 
- use App\Interface\ResponseInterface;
  use JetBrains\PhpStorm\NoReturn;
 
  class Response {

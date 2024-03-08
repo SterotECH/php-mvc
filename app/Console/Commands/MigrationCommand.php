@@ -1,7 +1,6 @@
 <?php
 
-namespace App\Command;
-
+namespace App\Console\Commands;
 
 use App\Core\Database;
 

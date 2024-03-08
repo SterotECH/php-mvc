@@ -23,8 +23,6 @@ spl_autoload_register(function ($class) {
 });
 
 require base_path('routes/web.php');
-try {
-    Router::executeRoutes();
-} catch (Exception $e) {
-    abort(\App\Core\Response::HTTP_GATEWAY_TIMEOUT);
-}
+
+Router::executeRoutes();
+

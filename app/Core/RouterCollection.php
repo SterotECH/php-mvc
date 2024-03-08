@@ -2,7 +2,7 @@
 
 namespace App\Core;
 
-use App\Interface\CollectionInterface;
+use App\Core\Interface\CollectionInterface;
 use Exception;
 
 class RouterCollection implements CollectionInterface

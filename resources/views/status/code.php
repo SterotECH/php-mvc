@@ -4,6 +4,7 @@ use App\Core\Router;
 /**
  * @var string $message
  * @var int $statusCode
+ * @var string $description
  */
 ?>
 <!DOCTYPE html>
@@ -50,7 +51,6 @@ use App\Core\Router;
         }
 
         .route {
-            display: flex;
             justify-content: start;
             align-items: center;
             padding: 5px 0;
@@ -94,7 +94,9 @@ use App\Core\Router;
          &nbsp;|&nbsp;
         <h2><?= $message ?></h2>
     </div>
-
+    <div class="bg-gray-100 rounded-lg shadow-md">
+        <p class="text-sm text-gray-600"><?= $description ?></p>
+    </div>
     <?php if (env('APP_ENV') === 'development' && $statusCode === 404): ?>
         <pre>
 <?php

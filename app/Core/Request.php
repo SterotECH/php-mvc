@@ -2,8 +2,8 @@
 
 namespace App\Core;
 
-use App\Interface\FormRequestInterface;
-use App\Interface\RequestInterface;
+use App\Core\Interface\FormRequestInterface;
+use App\Core\Interface\RequestInterface;
 
 session_start();
 

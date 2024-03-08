@@ -1,35 +1,71 @@
-<?php include base_path('resources/views/partials/_base.php') ?>
-<form action="/users" method="POST" class="w-full max-w-lg">
-    <div class="mb-4">
-        <label for="username" class="block text-gray-700 dark:text-gray-300 font-bold mb-2">Username</label>
-        <input type="text" id="username" name="username" placeholder="Username" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline">
+<?php include base_path('resources/views/partials/nav.view.php') ?>
+<?php include base_path('resources/views/partials/header.view.php') ?>
+<div class="flex min-h-full flex-col justify-center px-6 py-8 lg:px-8">
+    <div class="w-full mx-auto ">
+        <form action="/users" method="POST" class="mx-auto grid grid-cols-2 gap-4 mb-12">
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="username" class="label">Username</label>
+                <input type="text" id="username" name="username" value="<?= $_POST['username'] ?? '' ?>"
+                       class="input "/>
+                <?php if (isset($errors['username'])): ?>
+                    <span class="text-red-500 text-xs"><?php echo $errors['username']; ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="first_name" class="label">First Name</label>
+                <input type="text" id="first_name" name="first_name" value="<?= $_POST['first_name'] ?? '' ?>"
+                       class="input"/>
+                <?php if (isset($errors['first_name'])): ?>
+                    <span class="text-red-500 text-xs"><?php echo $errors['first_name']; ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="last_name" class="label">Last Name</label>
+                <input type="text" id="last_name" name="last_name" value="<?= $_POST['last_name'] ?? '' ?>"
+                       class="input"/>
+                <?php if (isset($errors['last_name'])): ?>
+                    <span class="text-red-500 text-xs"><?php echo $errors['last_name']; ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="other_name" class="label">Other Name</label>
+                <input type="text" id="other_name" name="other_name" value="<?= $_POST['other_name'] ?? '' ?>"
+                       class="input"/>
+                <?php if (isset($errors['other_name'])): ?>
+                    <span class="text-red-500 text-xs"><?php echo $errors['other_name']; ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="phone_number" class="label">Phone Number</label>
+                <input type="text" id="phone_number" name="phone_number" value="<?= $_POST['phone_number'] ?? '' ?>"
+                       class="input"/>
+                <?php if (isset($errors['phone_number'])): ?>
+                    <span class="text-red-500 text-xs"><?php echo $errors['phone_number']; ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="email" class="label">Email</label>
+                <input type="email" id="email" name="email" value="<?= $_POST['email'] ?? '' ?>" class="input"/>
+                <?php if (isset($errors['email'])): ?>
+                    <span class="text-red-500 text-xs"><?php echo $errors['email']; ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="password" class="label">Password</label>
+                <input type="password" id="password" name="password" value="<?= $_POST['password'] ?? '' ?>"
+                       class="input"/>
+                <?php if (isset($errors['password'])): ?>
+                    <span class="text-red-500 text-xs"><?php echo $errors['password']; ?></span>
+                <?php endif; ?>
+            </div>
+            <div class="flex items-center justify-between col-span-2">
+                <button
+                        type="submit"
+                        class="w-full text-white bg-violet-600 hover:bg-violet-700 focus:ring-4 focus:outline-none focus:ring-violet-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-violet-600 dark:hover:bg-violet-700 dark:focus:ring-violet-800">
+                    Submit
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="mb-4">
-        <label for="first_name" class="block text-gray-700 dark:text-gray-300 font-bold mb-2">First Name</label>
-        <input type="text" id="first_name" name="first_name" placeholder="First Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-4">
-        <label for="last_name" class="block text-gray-700 dark:text-gray-300 font-bold mb-2">Last Name</label>
-        <input type="text" id="last_name" name="last_name" placeholder="Last Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-4">
-        <label for="other_name" class="block text-gray-700 dark:text-gray-300 font-bold mb-2">Other Name</label>
-        <input type="text" id="other_name" name="other_name" placeholder="Other Name" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-4">
-        <label for="phone_number" class="block text-gray-700 dark:text-gray-300 font-bold mb-2">Phone Number</label>
-        <input type="text" id="phone_number" name="phone_number" placeholder="Phone Number" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-4">
-        <label for="email" class="block text-gray-700 dark:text-gray-300 font-bold mb-2">Email</label>
-        <input type="email" id="email" name="email" placeholder="Email" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="mb-4">
-        <label for="password" class="block text-gray-700 dark:text-gray-300 font-bold mb-2">Password</label>
-        <input type="password" id="password" name="password" placeholder="Password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline">
-    </div>
-    <div class="flex items-center justify-between">
-        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
-    </div>
-</form>
+</div>
 <?php include base_path('resources/views/partials/footer.php') ?>

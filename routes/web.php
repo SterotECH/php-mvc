@@ -1,11 +1,17 @@
 <?php
 
-use App\Controller\HomeController;
-use App\Controller\UserController;
-use App\Controller\NotesController;
-use App\Core\RequestInterface;
 use App\Core\Router;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotesController;
+use App\Http\Controllers\UserController;
+use App\Http\Middleware\AuthMiddleware;
+use App\Http\Middleware\GustMiddleware;
 
-Router::get('/', [HomeController::class , 'index']);
+Router::get('/', [HomeController::class , 'index'])->middleware([AuthMiddleware::class]);
+Router::get('/auth/login', [HomeController::class, 'render_login'])->middleware([GustMiddleware::class]);
+Router::post('/auth/login', [HomeController::class, 'login']);
+Router::get('/auth/register', [HomeController::class, 'render_register'])->middleware([GustMiddleware::class]);
+Router::delete('/auth/logout', [HomeController::class, 'logout']);
+Router::get('/auth/forgot-password', [HomeController::class, 'render_forgot_password']);
 Router::resource('/users',UserController::class);
-
+Router::resource('/notes', NotesController::class);

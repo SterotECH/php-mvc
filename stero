@@ -12,10 +12,11 @@
  * this class mainly acts as a pass thru to the framework itself.
  */
 
-use App\Command\SeederCommand;
+use App\Console\Commands\AlterationCommand;
+use App\Console\Commands\MigrationCommand;
+use App\Console\Commands\SeederCommand;
+use App\Console\Commands\ServeCommand;
 use Dotenv\Dotenv;
-use App\Command\MigrationCommand;
-use App\Command\AlterationCommand;
 
 const BASE_PATH = __DIR__ ;
 
@@ -43,6 +44,7 @@ $commands = [
     'db:status' => [MigrationCommand::class, 'status'],
     'delete:migration' => [MigrationCommand::class, 'deleteMigration'],
     'make:seeder' => [SeederCommand::class, 'makeSeeder'],
+    'serve' => [ServeCommand::class, 'handle']
 ];
 
 $command = $argv[1] ?? '';
