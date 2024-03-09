@@ -7,27 +7,20 @@ include base_path('resources/views/partials/_base.php');
             <h2 class="text-2xl font-bold mb-6 text-center">Stero MVC</h2>
             <p class="text-gray-600 mb-6 text-center">Sign in to your account</p>
             <form action="/auth/login" method="POST">
+                <?= csrf_field() ?>
                 <div class="mb-4">
                     <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                            type="email" id="email" name="email"
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            required value="<?= $_POST['email'] ?? '' ?>"
-                    />
+                    <input type="email" id="email" name="email" class="input" required value="<?= old('email') ?>" />
                 </div>
                 <div class="mb-4">
                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" id="password" name="password"
-                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                           required value="<?= $_POST['password'] ?? '' ?>"
-                    />
+                    <input type="password" id="password" name="password" class="input" required />
                 </div>
                 <div class="text-right mb-4">
                     <a href="/auth/forgot-password" class="text-sm text-indigo-600">Forgot password?</a>
                 </div>
                 <div class="mb-6">
-                    <button type="submit"
-                            class="w-full bg-indigo-500 text-white py-2 rounded-md hover:bg-indigo-600 focus:outline-none focus:bg-indigo-600">
+                    <button type="submit" class="w-full bg-indigo-500 text-white py-2 rounded-md hover:bg-indigo-600 focus:outline-none focus:bg-indigo-600">
                         Sign in
                     </button>
                 </div>
@@ -35,11 +28,12 @@ include base_path('resources/views/partials/_base.php');
                     <a href="/auth/register" class="text-indigo-600">Register</a>
                 </p>
             </form>
-            <?php if (isset($errors['email'])): ?>
-                <p class="mt-2 text-sm text-red-600"><?= $errors['email'] ?></p>
+            <?php if (isset($errors['email'])) : ?>
+                <?php displayError($errors['email']); ?>
             <?php endif; ?>
-            <?php if (isset($errors['password'])): ?>
-                <p class="mt-2 text-sm text-red-600"><?= $errors['password'] ?></p>
+
+            <?php if (isset($errors['password'])) : ?>
+                <?php displayError($errors['password']); ?>
             <?php endif; ?>
         </div>
         <div class="md:w-1/2 hidden md:block">

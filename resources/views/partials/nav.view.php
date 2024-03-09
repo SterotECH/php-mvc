@@ -46,6 +46,7 @@
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="user-menu-item-1">Settings</a>
                                 <a class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="user-menu-item-2">
                                     <form method="POST" action="/auth/logout">
+                                        <?= csrf_field() ?>
                                         <input type="hidden" name="_request_method" value="DELETE">
                                         <button class="w-full">Sign out</button>
                                     </form>

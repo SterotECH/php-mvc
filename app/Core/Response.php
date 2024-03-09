@@ -7,6 +7,7 @@ namespace App\Core;
  class Response {
     const HTTP_CONTINUE = 100;
     const HTTP_SWITCHING_PROTOCOLS = 101;
+
     const HTTP_OK = 200;
     const HTTP_CREATED = 201;
     const HTTP_ACCEPTED = 202;
@@ -14,6 +15,7 @@ namespace App\Core;
     const HTTP_NO_CONTENT = 204;
     const HTTP_RESET_CONTENT = 205;
     const HTTP_PARTIAL_CONTENT = 206;
+
     const HTTP_MULTIPLE_CHOICES = 300;
     const HTTP_MOVED_PERMANENTLY = 301;
     const HTTP_FOUND = 302;
@@ -22,6 +24,7 @@ namespace App\Core;
     const HTTP_USE_PROXY = 305;
     const HTTP_TEMPORARY_REDIRECT = 307;
     const HTTP_PERMANENT_REDIRECT = 308;
+
     const HTTP_BAD_REQUEST = 400;
     const HTTP_UNAUTHORIZED = 401;
     const HTTP_PAYMENT_REQUIRED = 402;
@@ -51,6 +54,7 @@ namespace App\Core;
     const HTTP_TOO_MANY_REQUESTS = 429;
     const HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE = 431;
     const HTTP_UNAVAILABLE_FOR_LEGAL_REASONS = 451;
+
     const HTTP_INTERNAL_SERVER_ERROR = 500;
     const HTTP_NOT_IMPLEMENTED = 501;
     const HTTP_BAD_GATEWAY = 502;

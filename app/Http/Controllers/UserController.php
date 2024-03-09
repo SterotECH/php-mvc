@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Core\Request;
 use App\Core\Validator;
 use App\Http\Auth;
+use App\Http\Forms\RegistrationForms;
 use App\Models\User;
 use JetBrains\PhpStorm\NoReturn;
 
@@ -27,55 +28,12 @@ class UserController extends Controller
 
     #[NoReturn] public function store(Request $request): void
     {
-        $username = $request->input('username');
-        $first_name = $request->input('first_name');
-        $last_name = $request->input('last_name');
-        $email = $request->input('email');
-        $password = $request->input('password');
-        $phone_number = $request->input('phone_number');
-
-        $errors = [];
-
-        if (!Validator::string($username, 1, 16)) {
-            $errors['username'] = 'Username must be at least 1 to 16 characters';
-        }
-        if (!Validator::string($first_name, 1, 100)) {
-            $errors['first_name'] = 'First name must be at least 1 to 100 charaters ';
-        }
-
-        if (!Validator::string($last_name, 1, 100)) {
-            $errors['last_name'] = 'Last name must be at least 1 to 100 characters.';
-        }
-
-        if (!Validator::email($email)) {
-            $errors['email'] = 'Invalid email format.';
-        }
-
-        if (!Validator::string($password, 8, 32)) {
-            $errors['password'] = 'Password must be at least 8 characters long.';
-        }
-
-        if (!Validator::phone($phone_number)) {
-            $errors['phone_number'] = 'Invalid phone number format';
-        }
-
-        $existing_email = User::find('email', $email);
-        if ($existing_email) {
-            $errors['email'] = 'A user with the given email already exists';
-        }
-        $existing_phone = User::find('phone_number', $phone_number);
-        if ($existing_phone) {
-            $errors['phone_number'] = 'A User with the same Phone Number Exists';
-        }
-
-        $existing_username = User::find('username', $username);
-        if ($existing_username) {
-            $errors['username'] = 'A User with the same Username Exists';
-        }
-        if (!empty($errors)) {
+        $form = new RegistrationForms();
+        ;
+        if (!$form->validate($request)) {
             $this->render('users/create', [
                 'heading' => 'Create User',
-                'errors' => $errors,
+                'errors' => $form->errors(),
             ]);
             exit();
         }
@@ -87,16 +45,17 @@ class UserController extends Controller
 
 
         $user = User::create([
-            'username' => $username,
-            'first_name' => $first_name,
-            'last_name' => $last_name,
+            'username' => $request->input('username'),
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
             'other_name' => $request->input('other_name') ?? null,
-            'phone_number' => $phone_number,
-            'email' => $email,
-            'password' => password_hash($password, PASSWORD_ARGON2I, $options),
+            'phone_number' => $request->input('phone_number'),
+            'email' => $request->input('email'),
+            'password' => password_hash($request->input('password'), PASSWORD_ARGON2I, $options),
         ]);
-        Auth::login($user);
-        redirect('/');
+        if ($user){
+            redirect('/users');
+        }
     }
 
 
@@ -115,8 +74,6 @@ class UserController extends Controller
     {
         $id = $request->params()->id;
         $user = User::getById($id);
-
-//        dd($user);
 
         $this->render('users/edit', [
             'user' => $user,

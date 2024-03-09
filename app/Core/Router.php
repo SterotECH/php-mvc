@@ -339,6 +339,11 @@ class Router
         return $path === $uri;
     }
 
+    public static function previousUrl(): string
+    {
+        return $_SERVER['HTTP_REFERER'];
+    }
+
     public function __destruct()
     {
         $this->args = [];

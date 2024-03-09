@@ -12,13 +12,14 @@ class Database
     private PDO $connection;
     private $statement;
 
+
     /**
      * Database constructor.
      * @throws Exception
      */
     private function __construct()
     {
-        $config = config('database');
+        $config =require  __DIR__ . '../../../config/database.php';
 
         $driverConfig = $config[env('DB_CONNECTION', 'pgsql')];
 

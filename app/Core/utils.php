@@ -1,25 +1,27 @@
 <?php
 
-use App\Core\Request;
+use App\Core\Exceptions\ConfigNotFoundException;
 use App\Core\Response;
-use App\Models\User;
+use App\Core\Session;
 use JetBrains\PhpStorm\NoReturn;
 
 /**
- * @throws Exception
+ * Require a config file from the config directory.
+ *
+ * @param string $filename The name of the config file (without the extension).
+ * @return mixed The configuration array.
+ * @throws Exception If the config file is not found.
  */
-function config($filename)
+function config(string $filename): mixed
 {
     $configDir = __DIR__ . '/../../config';
-
     $filePath = $configDir . '/' . $filename . '.php';
 
     if (file_exists($filePath)) {
-        return require_once $filePath;
+        return require $filePath;
     } else {
-        throw new Exception("Config file '$filename' not found in '$configDir'");
+        throw new ConfigNotFoundException($filename,$configDir);
     }
-
 }
 
 /**
@@ -49,7 +51,7 @@ function dd($data): void
         <div id="dd-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; overflow: auto;">
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; border: 1px solid #ddd; padding: 10px; overflow-x: auto; font-size: 16px; line-height: 1.5; max-width: 80%; border-radius: 10px;">
                 <pre id="dd-modal-content" style="max-height: 80vh; overflow: auto;"></pre>
-                <button 
+                <button
                     onclick="document.getElementById('dd-modal').style.display = 'none';"
                     style="padding: 8px 16px; background-color: #dc3545; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px;"
                 >Close</button>
@@ -127,17 +129,21 @@ function uriContains(string $value): bool
     return str_contains($currentUri, $value);
 }
 
-#[NoReturn] function abort(int $statusCode = Response::HTTP_NOT_FOUND, string|null $description = null): void
+/**
+ * @param int $statusCode
+ * @param string|null $description
+ * @return void
+ */
+function abort(int $statusCode = Response::HTTP_NOT_FOUND, string|null $description = null): void
 {
     http_response_code($statusCode);
 
     view('status/code', [
         'message' => Response::getStatusMessage($statusCode),
         'statusCode' => $statusCode,
-        'description'=>$description
+        'description' => $description
     ]);
     exit($statusCode);
-
 }
 
 
@@ -166,9 +172,45 @@ if (!function_exists('class_basename')) {
     }
 }
 
-
-#[NoReturn] function redirect($url): void
+function redirect($url): void
 {
     header("Location: $url");
     exit();
+}
+
+function old(string $key, mixed $default = '')
+{
+    return Session::get('old')[$key] ?? $default;
+}
+
+function displayError(array|string $errors): void
+{
+    if (is_array($errors)) {
+        foreach ($errors as $error) {
+            echo "<p class='mt-2 text-sm text-red-600'>$error</p>";
+        }
+    } else {
+        echo "<p class='mt-2 text-sm text-red-600'>$errors</p>";
+    }
+}
+
+function displaySuccess(string $message): void
+{
+    echo "<p class='mt-2 text-sm text-green-600>$message</p>";
+}
+
+function csrf_field(): string
+{
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    $csrfToken = $_SESSION['csrf_token'];
+
+
+    return "<input type='hidden' name='csrf_token' value='$csrfToken'>";
+}
+
+function method_field(string $method): string
+{
+    return "<input type='hidden' name='_request_method' value='$method'>";
 }

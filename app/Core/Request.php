@@ -203,4 +203,12 @@ class Request implements RequestInterface
     {
         return (array)$this->server;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return json_encode($this->server);
+    }
 }
