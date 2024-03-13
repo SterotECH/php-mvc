@@ -7,9 +7,11 @@ use App\Core\Session;
 use App\Core\Validator;
 use PHPUnit\Framework\TestCase;
 use App\Http\Controllers\Controller;
+use App\Core\Exceptions\ValidationExceptions;
 
 class ControllerTest extends TestCase
 {
+    use Controller;
     private Controller $controller;
 
     protected function setUp(): void

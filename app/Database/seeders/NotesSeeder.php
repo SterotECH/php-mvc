@@ -4,19 +4,12 @@ class NotesSeeder
 {
     public function run(): string
     {
-
-        return "
-            INSERT INTO notes (id, body, user_id, created_at, updated_at) 
-                VALUES ('Sample id 0', 'Sample body 0', 'Sample user_id 0', 'Sample created_at 0', 'Sample updated_at 0'), 
-                       ('Sample id 1', 'Sample body 1', 'Sample user_id 1', 'Sample created_at 1', 'Sample updated_at 1'), 
-                       ('Sample id 2', 'Sample body 2', 'Sample user_id 2', 'Sample created_at 2', 'Sample updated_at 2'), 
-                       ('Sample id 3', 'Sample body 3', 'Sample user_id 3', 'Sample created_at 3', 'Sample updated_at 3'), 
-                       ('Sample id 4', 'Sample body 4', 'Sample user_id 4', 'Sample created_at 4', 'Sample updated_at 4'), 
-                       ('Sample id 5', 'Sample body 5', 'Sample user_id 5', 'Sample created_at 5', 'Sample updated_at 5'), 
-                       ('Sample id 6', 'Sample body 6', 'Sample user_id 6', 'Sample created_at 6', 'Sample updated_at 6'), 
-                       ('Sample id 7', 'Sample body 7', 'Sample user_id 7', 'Sample created_at 7', 'Sample updated_at 7'), 
-                       ('Sample id 8', 'Sample body 8', 'Sample user_id 8', 'Sample created_at 8', 'Sample updated_at 8'), 
-                       ('Sample id 9', 'Sample body 9', 'Sample user_id 9', 'Sample created_at 9', 'Sample updated_at 9')";
-        
+    return "INSERT INTO notes (title, slug, content, user_id)
+    VALUES
+        ('Note Title 1', 'note-title-1', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 1),
+        ('Note Title 2', 'note-title-2', 'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', 2),
+        ('Note Title 3', 'note-title-3', 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', 3),
+        ('Note Title 4', 'note-title-4', 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.', 4),
+        ('Note Title 5', 'note-title-5', 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.', 5);";
     }
 }

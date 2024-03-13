@@ -19,7 +19,7 @@ class Database
      */
     private function __construct()
     {
-        $config =require  __DIR__ . '../../../config/database.php';
+        $config = config('database') ?? throw new Exception('Database config not found');
 
         $driverConfig = $config[env('DB_CONNECTION', 'pgsql')];
 
@@ -80,11 +80,11 @@ class Database
     /**
      * Fetch all rows from the result set.
      *
-     * @return array|false An array of rows as objects, or false if there are no rows.
+     * @return array|bool|object An array, Object of rows as objects, or false if there are no rows.
      */
-    public function findAll(): array|bool
+    public function findAll(): array|bool|object
     {
-        return $this->statement->fetchAll();
+        return $this->statement->fetchAll(PDO::FETCH_OBJ);
     }
 
     /**

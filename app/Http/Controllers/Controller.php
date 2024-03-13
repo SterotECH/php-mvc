@@ -66,11 +66,12 @@ class Controller
         $this->old = $old;
         $this->rules = $rules;
 
-
         $this->validator = new Validator();
+
         $this->validator->validate(data: $old, rules: $rules);
         $this->errors = $this->validator->errors();
-        if ($this->failed()) {
+//        dd($this->failed());
+        if (!$this->failed()) {
             $this->throwValidationException();
         }
     }
@@ -85,9 +86,9 @@ class Controller
         }
     }
 
-    protected function failed()
+    protected function failed(): bool
     {
-        return count($this->errors);
+        return empty($this->errors);
     }
 
     public function error(string $fields, string $message): static
@@ -96,7 +97,7 @@ class Controller
         return $this;
     }
 
-    public function throwValidationException()
+    public function throwValidationException(): void
     {
         $this->handleValidationException(ValidationExceptions::throw($this->errors, $this->old));
     }

@@ -1,3 +1,8 @@
+<?php
+
+use App\Core\Session;
+
+?>
 <!DOCTYPE html>
 <html lang="<?= substr($_SERVER['HTTP_ACCEPT_LANGUAGE'], 0, 2); ?>" class="h-full bg-gray-100">
     <head>
@@ -7,5 +12,5 @@
         <title><?= env('APP_NAME', 'PHP MVC'); ?></title>
         <link href="<?= url('/css/styles.css') ?>" rel="stylesheet">
     </head>
-    <body class="h-full">
-<?php //= dd($_SERVER) ?>
+    <body class="h-full transition-all">
+

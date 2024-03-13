@@ -3,6 +3,7 @@ module.exports = {
   content: [
     './resources/views/**/*.{html, php, js}',
     './resources/views/**/*.php',
+    './app/Core/**/*.php',
     './public/index.php'
   ],
   darkMode: 'class',

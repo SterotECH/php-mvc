@@ -3,34 +3,41 @@
 namespace App\Console\Commands;
 
 use Exception;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
-class ServeCommand
+#[AsCommand(name: 'serve')]
+class ServeCommand extends Command
 {
-    private static string $host = '127.0.0.1';
-    private static int $port = 8000;
-
-    /**
-     * @throws Exception
-     */
-    public static function handle(): void
+    protected function configure()
     {
-        $server = sprintf('%s:%d', self::$host, self::$port);
-        $root = $_SERVER['DOCUMENT_ROOT'];
+        $this->setDescription('Start the local development server')
+            ->addArgument('name', InputArgument::OPTIONAL, 'The name of the controller it must be the name of a model');
+    }
 
-        self::displayServerInfo($server, $root);
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $host = '127.0.0.1';
+        $port = 8000;
+
+        $io = new SymfonyStyle($input, $output);
+        $server = sprintf('%s:%d', $host, $port);
+
+        self::displayServerInfo($server, $io);
 
         exec("php -S $server -t public", $output, $returnCode);
 
-        if ($returnCode !== 0) {
-            throw new Exception('Failed to start the server.');
-        }
+        return Command::SUCCESS;
     }
 
 
-    private static function displayServerInfo(string $server, string $root): void
+    private static function displayServerInfo(string $server, $io): void
     {
-        echo "Server running at $server" . PHP_EOL;
-        echo "Document root is $root" . PHP_EOL;
-        echo "Press Ctrl+C to quit." . PHP_EOL;
+        $io->success("Server running at $server" . PHP_EOL);
+        $io->info("Press Ctrl+C to quit." . PHP_EOL);
     }
 }

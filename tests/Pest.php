@@ -1,5 +1,13 @@
 <?php
+declare(strict_types=1);
 
+const BASE_PATH = __DIR__ . '/../';
+
+require 'vendor/autoload.php';
+require 'app/Core/utils.php';
+
+$dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
+$dotenv->load();
 /*
 |--------------------------------------------------------------------------
 | Test Case

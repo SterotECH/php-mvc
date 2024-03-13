@@ -145,8 +145,8 @@ include base_path('resources/views/partials/header.view.php');
         <tbody>
         <?php foreach ($notes as $note): ?>
             <tr>
-                <td class="border px-4 py-2"><?= $note['body'] ?></td>
-                <td class="border px-4 py-2"><?= $note['user_id'] ?></td>
+                <td class="border px-4 py-2"><?= $note->content ?></td>
+                <td class="border px-4 py-2"><?= $note->user_id ?></td>
                 <td class="border px-4 py-2">
                     <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline">
                         Edit

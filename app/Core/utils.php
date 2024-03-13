@@ -4,6 +4,7 @@ use App\Core\Exceptions\ConfigNotFoundException;
 use App\Core\Response;
 use App\Core\Session;
 use JetBrains\PhpStorm\NoReturn;
+use Random\RandomException;
 
 /**
  * Require a config file from the config directory.
@@ -20,7 +21,7 @@ function config(string $filename): mixed
     if (file_exists($filePath)) {
         return require $filePath;
     } else {
-        throw new ConfigNotFoundException($filename,$configDir);
+        throw new ConfigNotFoundException($filename, $configDir);
     }
 }
 
@@ -39,7 +40,7 @@ function env($key, $default = null): mixed
 }
 
 
-function dd($data): void
+function dd(...$data): void
 {
     if (env('APP_ENV') !== 'development') {
         return;
@@ -65,7 +66,6 @@ function dd($data): void
     HTML;
     die();
 }
-
 
 
 /**
@@ -183,6 +183,66 @@ function old(string $key, mixed $default = '')
     return Session::get('old')[$key] ?? $default;
 }
 
+function showToast($message, $color, $type): void
+{
+    if (is_array($message)) {
+        $errorMessages = '';
+        foreach ($message as $error) {
+            $errorMessages .= <<< HTML
+                                <div id="toast" class="flex items-center p-4 mb-4 text-sm text-$color-800 rounded-lg bg-$color-50 dark:bg-gray-800 dark:text-$color-400 z-50 transition-all" role="alert">
+                                    <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                                    </svg>
+                                    <span class="sr-only">$type</span>
+                                <div>
+                               $error
+                            </div>
+                            </div>
+                            HTML;
+        }
+                echo $errorMessages;
+    } else {
+        echo <<< HTML
+                                <div id="toast" class="flex items-center p-4 mb-4 text-sm text-$color-800 rounded-lg bg-$color-50 dark:bg-gray-800 dark:text-$color-400 z-50 transition-all" role="alert">
+                                    <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                                    </svg>
+                                    <span class="sr-only">$type</span>
+                                <div>
+                               $message
+                            </div>
+                            </div>
+                            HTML;
+    }
+    echo "<script >
+              const toast = document . getElementById('toast');
+              toast . classList . remove('hidden');
+              setTimeout(() => {
+            toast . classList . add('hidden');
+            }, 3000);
+        </script > ";
+}
+
+function errorToast($message): void
+{
+    showToast($message, 'red', 'error');
+}
+
+function successToast($message): void
+{
+    showToast($message, 'green', 'success');
+}
+
+function warningToast($message): void
+{
+    showToast($message, 'amber', 'danger');
+}
+
+function infoToast($message): void
+{
+    showToast($message, 'blue', 'info');
+}
+
 function displayError(array|string $errors): void
 {
     if (is_array($errors)) {
@@ -194,11 +254,14 @@ function displayError(array|string $errors): void
     }
 }
 
-function displaySuccess(string $message): void
+function displaySuccess(string $message): string
 {
-    echo "<p class='mt-2 text-sm text-green-600>$message</p>";
+    return "<p class='mt-2 text-sm text-green-600>$message</p>";
 }
 
+/**
+ * @throws RandomException
+ */
 function csrf_field(): string
 {
     if (!isset($_SESSION['csrf_token'])) {
@@ -214,3 +277,9 @@ function method_field(string $method): string
 {
     return "<input type='hidden' name='_request_method' value='$method'>";
 }
+
+function formatColumnName(string $columnName): string
+{
+    return ucwords(str_replace('_', ' ', $columnName));
+}
+

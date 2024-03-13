@@ -20,35 +20,35 @@
                             <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
                             <input type="text" name="username" id="username" class="input" value="<?= old('username') ?>" required />
                             <?php if (isset($errors['username'])) : ?>
-                                <?php displayError($errors['username']); ?>
+                                <?= displayError($errors['username']); ?>
                             <?php endif; ?>
                         </div>
                         <div>
                             <label for="first_name" class="block text-sm font-medium text-gray-700">First Name</label>
                             <input type="text" name="first_name" id="first_name" class="input" value="<?= old('first_name') ?>" required>
                             <?php if (isset($errors['first_name'])) : ?>
-                                <?php displayError($errors['first_name']); ?>
+                                <?= displayError($errors['first_name']); ?>
                             <?php endif; ?>
                         </div>
                         <div>
                             <label for="last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
                             <input type="text" name="last_name" id="last_name" class="input" value="<?= old('last_name') ?>" required>
                             <?php if (isset($errors['last_name'])) : ?>
-                                <?php displayError($errors['last_name']); ?>
+                                <?= displayError($errors['last_name']); ?>
                             <?php endif; ?>
                         </div>
                         <div>
                             <label for="other_name" class="block text-sm font-medium text-gray-700">Other Name</label>
                             <input type="text" name="other_name" id="other_name" class="input" value="<?= old('other_name') ?>">
                             <?php if (isset($errors['other_name'])) : ?>
-                                <?php displayError($errors['other_name']); ?>
+                                <?= displayError($errors['other_name']); ?>
                             <?php endif; ?>
                         </div>
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                             <input type="email" name="email" id="email" class="input" value="<?= old('email') ?>" required>
                             <?php if (isset($errors['email'])) : ?>
-                                <?php displayError($errors['email']); ?>
+                                <?= displayError($errors['email']); ?>
                             <?php endif; ?>
                         </div>
                         <div>
@@ -56,14 +56,14 @@
                                 Number</label>
                             <input type="tel" name="phone_number" id="phone_number" class="input" value="<?= old('phone_number') ?>" required>
                             <?php if (isset($errors['phone_number'])) : ?>
-                                <?php displayError($errors['phone_number']); ?>
+                                <?= displayError($errors['phone_number']); ?>
                             <?php endif; ?>
                         </div>
                         <div>
                             <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
                             <input type="password" name="password" id="password" class="input" required>
                             <?php if (isset($errors['password'])) : ?>
-                                <?php displayError($errors['password']); ?>
+                                <?= displayError($errors['password']); ?>
                             <?php endif; ?>
                         </div>
                         <div>
@@ -71,7 +71,7 @@
                                 Password</label>
                             <input type="password" name="password_confirmation" id="password_confirmation" class="input" required>
                             <?php if (isset($errors['password_confirmation'])) : ?>
-                                <?php displayError($errors['password_confirmation']); ?>
+                                <?= displayError($errors['password_confirmation']); ?>
                             <?php endif; ?>
                         </div>
                     </div>

@@ -11,6 +11,7 @@ class Request implements RequestInterface
 {
     private ?object $server = null;
     private array $args = [];
+    private array $files = [];
 
     public ?FormRequestInterface $request = null;
 
@@ -26,6 +27,7 @@ class Request implements RequestInterface
         }
 
         $this->args = $args;
+        $this->files = $_FILES;
     }
 
     /**
@@ -210,5 +212,32 @@ class Request implements RequestInterface
     public function __toString(): string
     {
         return json_encode($this->server);
+    }
+
+    public function file(string $name): ?array
+    {
+        return isset($this->files[$name]) ? $this->files[$name] : null;
+    }
+
+    public function uploadFile(string $name, string $destination = '/images'): ?string
+    {
+        $file = $this->file($name);
+
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . $destination;
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $fileName = uniqid('file_') . '.' . $extension;
+        $filePath = $uploadDir . '/' . $fileName;
+
+        move_uploaded_file($file['tmp_name'], $filePath);
+
+        return $destination . '/' . $fileName;
     }
 }

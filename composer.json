@@ -2,9 +2,12 @@
     "name": "stero/php-mvc",
     "description": "PHP MVP template",
     "type": "project",
+    "keywords": ["MVC", "Stero MVC"],
     "require": {
         "php": "^8.2",
-        "vlucas/phpdotenv": "^5.6"
+        "vlucas/phpdotenv": "^5.6",
+        "symfony/console": "^7.0",
+        "ext-pdo": "*"
     },
     "require-dev": {
         "phpstan/phpstan": "^1.10",
@@ -19,19 +22,29 @@
         }
     ],
     "scripts": {
-        "analyse": "vendor/bin/phpstan",
-        "format": "vendor/bin/php-cs-fixer fix --allow-risky=yes"
+        "post-root-package-install": [
+            "php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php stero key:generate ",
+            "@php -r \"file_exists('app/Database/database.sqlite') || touch('app/Database/database.sqlite');\"",
+            "@php stero migrate "
+        ]
     },
     "autoload": {
         "psr-4": {
             "App\\": "app/"
         }
     },
-    "minimuim-stability": "dev",
+    "minimuim-stability": "stable",
     "prefer-stable": true,
     "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
         "allow-plugins": {
-            "pestphp/pest-plugin": true
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
         }
     }
 }

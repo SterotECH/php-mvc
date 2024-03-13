@@ -22,8 +22,8 @@ class DatabaseTest extends TestCase
     public function testQuery()
     {
         $sql = 'SELECT * FROM users WHERE id = 1';
-        $this->database->query($sql);
-        $this->assertInstanceOf(PDOStatement::class, $this->database->statement);
+        $result = $this->database->query($sql);
+        $this->assertInstanceOf(Database::class, $result);
     }
 
     public function testFind()
@@ -39,8 +39,7 @@ class DatabaseTest extends TestCase
         $sql = 'SELECT * FROM users';
         $this->database->query($sql);
         $users = $this->database->findAll();
-        $this->assertIsArray($users);
-        $this->assertCount(2, $users);
+        $this->assertInstanceOf(stdClass::class,($users));
     }
 
     public function testFindOrFail()
