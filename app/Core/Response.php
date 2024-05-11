@@ -2,9 +2,8 @@
 
 namespace App\Core;
 
- use JetBrains\PhpStorm\NoReturn;
-
- class Response {
+class Response
+{
     const HTTP_CONTINUE = 100;
     const HTTP_SWITCHING_PROTOCOLS = 101;
 
@@ -131,84 +130,139 @@ namespace App\Core;
         };
     }
 
-     private array $data = [];
+    private static array $data = [];
+    private static array $headers = [];
+    private static string $view;
 
-     /**
-      * @param array $data
-      * @param int $status
-      * @return string
-      */
-     public function json(array $data, int $status = self::HTTP_OK): string
-     {
-         header("Content-type:application/json");
-         http_response_code($status);
-         return json_encode($data);
-     }
 
-     /**
-      * @param string $data
-      * @param int $status
-      * @return string
-      */
-     public function plainText(string $data, int $status = self::HTTP_OK): string
-     {
-         header("Content-Type:text/plain;charset=UTF-8");
-         http_response_code($status);
-         return $data;
-     }
+    /**
+     * @param array $data
+     * @param int $status
+     * @return string
+     */
+    public static function json(array $data, int $status = self::HTTP_OK): string
+    {
+        header("Content-type:application/json");
+        http_response_code($status);
+        return json_encode($data);
+    }
 
-     /**
-      * @param string $data
-      * @param int $status
-      * @return string
-      */
-     public function plainHtml(string $data, int $status = self::HTTP_OK): string
-     {
-         header("Content-Type:text/html;charset=UTF-8");
-         http_response_code($status);
-         return $data;
-     }
+    /**
+     * @param string $url
+     * @param int $status
+     * @return void
+     */
+    public static function redirect(string $url, int $status = self::HTTP_MOVED_PERMANENTLY): void
+    {
+        redirect($url, $status);
+    }
 
-     /**
-      * @param string $url
-      * @param int $status
-      * @return void
-      */
-     #[NoReturn] public function redirect(string $url, int $status = self::HTTP_MOVED_PERMANENTLY): void
-     {
-         header("Location:{$url}");
-         http_response_code($status);
-         exit();
-     }
+    /**
+     * @return string
+     *
+     */
+    public function toJson(): string
+    {
+        header("Content-type:application/json");
+        return json_encode(self::$data);
+    }
 
-     /**
-      * @param array $data
-      * @param int $status
-      * @return Response
-      */
-     public function withErrors(array $data, int $status = self::HTTP_UNPROCESSABLE_ENTITY): Response
-     {
-         http_response_code($status);
-         $this->data = [...$data];
+    /**
+     * Set headers for the response.
+     *
+     * @param array $headers The headers to set
+     * @return $this
+     */
+    public function headers(array $headers): self
+    {
+        self::$headers = $headers;
+        return $this;
+    }
 
-         return $this;
-     }
+    /**
+     * Get the headers for the response.
+     *
+     * @return array
+     */
+    public function getHeaders(): array
+    {
+        return self::$headers;
+    }
 
-     /**
-      * @return string
-      *
-      */
-     public function toJson(): string
-     {
-         header("Content-type:application/json");
-         return json_encode($this->data);
-     }
+    /**
+     * Render a view response.
+     *
+     * @param string $view The view name
+     * @param array|null $data
+     */
+    public static function view(string $view, ?array $data = []): void
+    {
 
-     /**
-      * @return array
-      */
-     public function getResponseData(): array
-     {
-         return $this->data;
-     }
+        $viewPath = base_path("resources/views/$view.tpl.php");
+        $cachePath = base_path("storage/cache/views/");
+
+        if (!file_exists($viewPath)) {
+            abort(description: "resources/views/$view.tpl.php do not exist");
+        }
+
+        $content = file_get_contents($viewPath);
+
+        header('Content-Type: text/html');
+        foreach (self::$headers as $header => $value) {
+            header("$header: $value");
+        }
+
+        http_response_code(self::HTTP_OK);
+        ob_start();
+        $data['errors'] = Session::get('errors');
+
+        if (!empty($data)) {
+            extract($data);
+        }
+
+        $content = self::tokenizeView($content);
+
+        $cacheFile = $cachePath . $view . '.cache.php';
+
+        $cacheDir = dirname($cacheFile);
+        if (!file_exists($cacheDir)) {
+            mkdir($cacheDir, 0777, true);
+        }
+
+        file_put_contents($cacheFile, $content);
+        require $cacheFile;
+    }
+
+    private static function tokenizeView(string $content): string
+    {
+
+        $content = preg_replace('/{{\s*(.+?)\s*}}/', '<?= htmlspecialchars($1); ?> ', $content);
+
+        $content = preg_replace('/@resource\(\s*(.+?)\s*\)/', '<?php resource($1) ?>', $content);
+
+        $content = preg_replace('/@component\(\s*(.+?)\s*\)/', '<?php include base_path($1) ?>', $content);
+
+        $content = str_replace('@php', '<?php', $content);
+        $content = str_replace('@endphp', '?>', $content);
+
+        $content = preg_replace('/@foreach\(\s*(.+?)\s*\)/', '<?php foreach($1): ?>', $content);
+        $content = str_replace('@endforeach', '<?php endforeach; ?>', $content);
+
+        $content = preg_replace('/@if\((.*?)\)\)/', '<?php if($1)): ?>', $content);
+
+        $content = preg_replace('/@elseif\(\s*(.+?)\s*\)/', '<?php elseif($1): ?>', $content);
+        $content = str_replace('@else', '<?php else: ?>', $content);
+        $content = str_replace('@endif', '<?php endif; ?>', $content);
+
+        $content = preg_replace('/@include\s*\((.+?)\)\s*;/s', '<?php include $1; ?>', $content);
+
+        $content = preg_replace('/@section\(\s*(.+?)\s*\)/', '<section name="$1">', $content);
+        $content = str_replace('@endsection', '</section>', $content);
+
+        $content = preg_replace('/@assets\(\s*(.+?)\s*\)/', '<?= asset($1) ?>', $content);
+
+        $content = preg_replace('/@yield\(\s*(.+?)\s*\)/', '<?php yield($1); ?>', $content);
+
+        return $content;
+    }
 }

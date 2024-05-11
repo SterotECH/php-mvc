@@ -26,7 +26,7 @@ class KeyGenerateCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->updateEnvFile($key = bin2hex(random_bytes(32)));
+        $key = bin2hex(random_bytes(32));
 
         $output->writeln([
             'Application Key Generated Successfully',
@@ -38,8 +38,11 @@ class KeyGenerateCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function updateEnvFile($keyValue): void
+    private function updateEnvFile($keyName, $keyValue)
     {
-        env(APP_KEY, $keyValue);
+        $dotenv = new Dotenv();
+        $dotenv->load(__DIR__ . '/../../.env');
+        $dotenv->required($keyName, $keyValue);
+        $dotenv->save();
     }
 }

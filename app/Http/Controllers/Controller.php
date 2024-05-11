@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
-use App\Core\Router;
 use App\Core\Session;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Response;
-use App\Core\Exceptions\ValidationExceptions;
 use App\Core\Validator;
 
 /**
@@ -19,11 +16,8 @@ class Controller
 {
 
     public Database $db;
-    protected array $errors = [];
     protected Validator $validator;
     protected Request $request;
-    public array $old = [];
-    public array $rules = [];
 
     /**
      * Controller constructor.
@@ -55,51 +49,7 @@ class Controller
             extract($data);
         }
 
-        $data['errors'] = $this->errors;
-        $data['old'] = $this->old;
-
         require_once $viewFilePath;
-    }
-
-    protected function validate(array $old, array $rules): void
-    {
-        $this->old = $old;
-        $this->rules = $rules;
-
-        $this->validator = new Validator();
-
-        $this->validator->validate(data: $old, rules: $rules);
-        $this->errors = $this->validator->errors();
-//        dd($this->failed());
-        if (!$this->failed()) {
-            $this->throwValidationException();
-        }
-    }
-
-    protected function handleValidationException(Exception $exception): void
-    {
-        if ($exception instanceof ValidationExceptions) {
-            Session::flash('errors', $exception->errors);
-            Session::flash('old', $exception->old);
-            redirect(Router::previousUrl());
-            exit;
-        }
-    }
-
-    protected function failed(): bool
-    {
-        return empty($this->errors);
-    }
-
-    public function error(string $fields, string $message): static
-    {
-        $this->errors[$fields] = $message;
-        return $this;
-    }
-
-    public function throwValidationException(): void
-    {
-        $this->handleValidationException(ValidationExceptions::throw($this->errors, $this->old));
     }
 
     /**

@@ -4,29 +4,14 @@ namespace App\Traits;
 
 use App\Core\Database;
 use App\Core\Session;
+use InvalidArgumentException;
 
 trait Model
 {
+
     protected static Database $database;
-
-    /**
-     * Initialize the database connection.
-     */
-    public static function init(): void
-    {
-        self::$database = Database::getInstance();
-    }
-
-    /**
-     * @return string
-     */
-    public static function getTableName(): string
-    {
-        $className = static::class;
-        $parts = explode('\\', $className);
-        $className = end($parts);
-        return strtolower($className) . 's'; // Assuming table names are plural
-    }
+    protected static array $whereParams = [];
+    protected static string $whereClause = '';
 
     /**
      * Save the model data to the database.
@@ -46,9 +31,9 @@ trait Model
         $params = array_values($updateData);
 
         if ($id) {
-            $updateColumns = implode(' = :', array_keys($updateData)) . ' = :id';
-            $params['id'] = $id;
-            $sql = "UPDATE $table SET $updateColumns WHERE id = :id";
+            $updateColumns = implode(' = ?, ', array_keys($updateData)) . ' = ?';
+            array_push($params, $id);
+            $sql = "UPDATE $table SET $updateColumns WHERE id = ?";
         } else {
             $columns = implode(', ', array_keys($data));
             $values = ':' . implode(', :', array_keys($data));
@@ -57,10 +42,6 @@ trait Model
 
         self::init();
         self::$database->query($sql, $params);
-
-        if (!$id) {
-            $id = self::$database->lastInsertId();
-        }
 
         return self::findById($id);
     }
@@ -73,7 +54,13 @@ trait Model
     public static function select(array $columns = null): string
     {
         $table = self::getTableName();
-        $fields = $columns ? implode(', ',$columns) : implode(', ',  static::$fields);
+        $fields = $columns ? implode(', ', array_map(function ($column) use ($table) {
+            if (str_contains($column, '.')) {
+                return $column;
+            } else {
+                return "$table.$column";
+            }
+        }, $columns)) : implode(',', static::$fields);
         return "SELECT $fields FROM $table";
     }
 
@@ -93,14 +80,17 @@ trait Model
      * Find a record by ID.
      *
      * @param string|int $id The ID of the record to find.
-     * @return bool|object An object representing the query.
+     * @param array|null $columns The columns to select.
      */
-    public static function findById(string|int $id, array $columns = null): bool|object
+    public static function findById(string|int $id, array $columns = null)
     {
 
-        $query = $columns ?  self::select([...$columns]) : self::select();
+        $query = $columns ? self::select([...$columns]) : self::select();
         $query .= ' WHERE id = ?';
-        return self::$database->query($query, [$id])->findOrFail();
+        self::init();
+        $result = self::$database->query($query, [$id])->findOrFail();
+
+        return $result ? $result : null;
     }
 
     /**
@@ -116,10 +106,11 @@ trait Model
         return self::$database->query($query, [$slug])->findOrFail();
     }
 
-    public static function all(): object|bool|array
+    public static function all(?array $fields = []): object|bool|array
     {
         self::init();
-        return self::$database->query(self::select())->findAll();
+        return !empty($fields) ? self::$database->query(self::select([...$fields]))->findAll()
+            : self::$database->query(self::select())->findAll();
     }
 
     /**
@@ -129,15 +120,14 @@ trait Model
      * @param string $value The value to match.
      * @return object|null The found record, or null if not found.
      *
-     * @example
-     * ```php
+     * @example ```php
      * $user = User::find('username', 'john_doe');
      * if ($user) {
      *     echo "User found: " . $user->username;
      * } else {
      *     echo "User not found.";
      * }
-     * ```
+     *
      */
     public static function find(string $key, string $value, array $columNames = null): ?object
     {
@@ -162,7 +152,6 @@ trait Model
         $query = "SELECT DISTINCT $fieldsStr FROM $table";
         return self::$database->query($query)->findAll();
     }
-
 
     /**
      * Count the total number of records in the table.
@@ -209,24 +198,17 @@ trait Model
 
         if (self::$whereClause) {
             $query .= ' WHERE' . self::$whereClause;
+            // self::$whereClause = '';
+            // self::$whereParams  = [];
         }
-
-        if (self::$joinClause) {
-            $query .= self::$joinClause;
-        }
-
-        self::$lastQuery = $query;
-
         return $query;
     }
 
     private function executeQuery(string $query, bool $findAll): array|object|bool
     {
+        self::init();
         if (self::$whereParams) {
             $params = self::$whereParams;
-            if (self::$joinParams) {
-                $params = array_merge($params, self::$joinParams);
-            }
             return $findAll
                 ? self::$database->query($query, $params)->findAll()
                 : self::$database->query($query, $params)->find();
@@ -237,20 +219,35 @@ trait Model
         }
     }
 
-
     /**
      * Add a WHERE clause to the query.
      *
      * @param array $conditions An associative array of column-value pairs for the conditions.
+     * @param string $operator The operator to use for comparisons (e.g., '=', '>', 'LIKE').
      * @param string $conjunction The conjunction to use between conditions (e.g., 'AND', 'OR').
      * @return \App\Models\Model|Model An object representing the modified query.
      */
     public static function where(array $conditions, string $operator = '=', string $conjunction = 'AND'): self
     {
+        $validOperators = ['=', '<', '>', '<=', '>=', '<>', '!=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN'];
+        if (!in_array($operator, $validOperators)) {
+            throw new InvalidArgumentException("Invalid operator: $operator");
+        }
+
         $whereStr = '';
         foreach ($conditions as $column => $value) {
-            $whereStr .= "$column $operator :$column $conjunction ";
-            self::$whereParams[":$column"] = $value;
+            if (is_array($value)) {
+                if ($operator === 'IN' || $operator === 'NOT IN') {
+                    $placeholders = implode(', ', array_fill(0, count($value), "?"));
+                    $whereStr .= "$column $operator ($placeholders) $conjunction ";
+                    self::$whereParams = array_merge(self::$whereParams, $value);
+                } else {
+                    throw new InvalidArgumentException("Invalid operator '$operator' for array value");
+                }
+            } else {
+                $whereStr .= " $column $operator :$column $conjunction ";
+                self::$whereParams[":$column"] = $value;
+            }
         }
         $whereStr = rtrim($whereStr, "$conjunction ");
         self::$whereClause .= " $whereStr";
@@ -266,18 +263,19 @@ trait Model
      * @param string $type The type of join (e.g., 'INNER', 'LEFT', 'RIGHT').
      * @return \App\Models\Model|Model An object representing the modified query.
      */
-    public function join(string $table, string $condition, string $type = 'INNER'): self
+    public static function join(string $table, string $condition, string $type = 'INNER'): self
     {
         self::$joinClause .= " $type JOIN $table ON $condition";
-        return $this;
+        return new static();
     }
+
 
     /**
      * Get the JOIN clause string.
      *
      * @return string The JOIN clause string.
      */
-    public function getJoinClause(): string
+    protected function getJoinClause(): string
     {
         return self::$joinClause;
     }
@@ -287,7 +285,7 @@ trait Model
      *
      * @return array The JOIN clause parameters.
      */
-    public function getJoinParams(): array
+    protected function getJoinParams(): array
     {
         return self::$joinParams;
     }
@@ -299,9 +297,25 @@ trait Model
      * @param array|null $params The parameters to bind to the query.
      * @return array|object|bool|null An array of objects representing the retrieved records.
      */
-    public function raw(string $query, array $params = null): array|object|bool|null
+    public static function raw(string $query, array $params = null): array|object|bool|null
     {
+        self::init();
         return $params ? self::$database->query($query, $params)->findAll() : self::$database->query($query)->findAll();
     }
 
+    protected function getWhereClause(): string
+    {
+        return self::$whereClause;
+    }
+
+    protected function getWhereParams(): array
+    {
+        return self::$whereParams;
+    }
+
+    public function __destruct()
+    {
+        self::$whereClause = '';
+        self::$whereParams = [];
+    }
 }

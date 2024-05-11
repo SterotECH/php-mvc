@@ -4,8 +4,9 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use RuntimeException;
+use App\Core\Validator;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -18,114 +19,81 @@ class CreateSuperuserCommand extends Command
 
     protected function configure()
     {
-        $this->setDescription('Create a superuser account');
+        $this->setName('create:superuser')
+            ->addOption('date-format', 'd', InputOption::VALUE_OPTIONAL, 'Date format (e.g., Y-m-d)', 'Y-m-d')
+            ->setDescription('Create a superuser account');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        self::validate($attributes = [], $io);
+        $validator = new Validator();
 
+        $dateFormat = $input->getOption('date-format') ?? 'Y-m-d';
+        $io->note("Date format: $dateFormat");
 
-        unset($attributes['confirm_password']);
+        $fields = [
+            'email' => 'required|email|unique:users,email',
+            'username' => 'required|unique:users,username',
+            'phone_number' => 'required|unique:users,phone_number',
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'date_of_birth' => "required|date|dateFormat:$dateFormat",
+            'gender' => 'required|string',
+        ];
 
-        $attributes['password'] = password_hash($attributes['password'], PASSWORD_ARGON2I, [
-            'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
-            'time_cost' => PASSWORD_ARGON2_DEFAULT_TIME_COST,
-            'threads' => PASSWORD_ARGON2_DEFAULT_THREADS,
-        ]);
+        $retryLimit = 3;
+        $hasError = false;
 
-        $attributes['role'] = 'admin';
-        $attributes['is_superuser'] = 1;
-        $attributes['other_name'] = '';
+        foreach ($fields as $fieldName => $rules) {
+            $attempts = 0;
 
-        $user = User::create($attributes);
+            while ($attempts < $retryLimit && $hasError === true) {
+                $value = $io->ask("Enter $fieldName");
+                $validate = $validator->validate(rules: [$fieldName => $rules], data: [$fieldName => $value]);
 
-        if (!$user){
-            $io->error('Something went wrong');
-            Command::INVALID;
-        }
-        $io->success("{$attributes['username']} Admin account have being activated successfully");
+                if (!$validate) {
+                    $io->note($validator->errors()[$fieldName]);
+                    $validator->clearErrors();
+                    $hasError = true;
+                    $attempts++;
+                } else {
+                    break;
+                }
+            }
 
-        return Command::SUCCESS;
-    }
-
-    public static function validate(array $attributes, $io): array
-    {
-        $attributes['username'] = $io->ask('Enter username (at least 6 characters)', get_current_user(), function(string $value): string
-        {
-            if (strlen($value) < 5){
-                throw new RuntimeException('username must be at least 6 charters');
+            if ($attempts === $retryLimit && $hasError === true) {
+                $io->error("Maximum number of attempts reached for $fieldName. Exiting...");
+                $hasError = true;
+                return Command::FAILURE;
             }
-            if (is_numeric($value) || is_array($value)){
-                throw new RuntimeException('username must be string');
-            }
-            return $value;
-        });
-        $exitingUser = User::find('username',$attributes['username']);
-        while ($exitingUser->username === $attributes['username']){
-            $io->error('User with that username already exist');
-            $attributes['username'] = $io->ask('Enter username');
-        }
-        $attributes['first_name'] = $io->ask('Enter First Name',null, function(string $value): string
-        {
-            if (strlen($value) < 5){
-                throw new RuntimeException('first name must be at least 5 charters');
-            }
-            if (is_numeric($value) || is_array($value)){
-                throw new RuntimeException('first_name must be string');
-            }
-            return $value;
-        });
-        $attributes['last_name'] = $io->ask('Enter Last Name', null, function(string $value): string
-        {
-            if (strlen($value) < 5){
-                throw new RuntimeException('last name must be at least 6 charters');
-            }
-            if (is_numeric($value) || is_array($value)){
-                throw new RuntimeException('last name must be string');
-            }
-            return $value;
-        });
-        $attributes['email'] = $io->ask('Enter Email',null, function(string $value): string
-        {
-            if (filter_var($value,FILTER_VALIDATE_EMAIL)){
-                throw new RuntimeException('invalid email');
-            }
-            if (is_numeric($value) || is_array($value)){
-                throw new RuntimeException('email must be string');
-            }
-            return $value;
-        });
-        $exitingUser = User::find('email',$attributes['email']);
-        while ($exitingUser->email === $attributes['email']){
-            $io->error('User with that email already exist');
-            $attributes['email'] = $io->ask('Enter Email');
-        }
-        $attributes['phone_number'] = $io->ask('Enter Phone Number', null, function(string $value): string
-        {
-            if (strlen($value) < 10){
-                throw new RuntimeException('phone number must be at least 10 charters');
-            }
-            if (! is_numeric($value)){
-                throw new RuntimeException('phone number must be a numeric value');
-            }
-            return $value;
-        });
-        $exitingUser = User::find('phone_number',$attributes['phone_number']);
-        while ($exitingUser->phone_number === $attributes['phone_number']){
-            $io->error('User with that Phone Number already exist');
-            $attributes['phone_number'] = $io->ask('Enter Phone Number');
-        }
-        $attributes['password'] = $io->askHidden('Enter password');
-        $attributes['confirm_password'] = $io->askHidden('Confirm Password');
-
-        while ($attributes['password'] !== $attributes['confirm_password']) {
-            $io->error('Password Mismatch retype');
-            $attributes['password'] = $io->askHidden('Enter password');
-            $attributes['confirm_password'] = $io->askHidden('Confirm Password');
         }
 
-        return $attributes;
+        if (!$hasError) {
+            $password = $io->askHidden('Enter password:');
+            $confirmPassword = $io->askHidden('Confirm password:');
+
+            if ($password !== $confirmPassword) {
+                throw new RuntimeException('Passwords do not match.');
+            }
+
+            $user = new User();
+
+            foreach ($fields as $fieldName => $rules) {
+                $user->{$fieldName} = $io->ask("Enter $fieldName:");
+            }
+            $user->other_name = '';
+            $user->address = '';
+            $user->password = password_hash($password, PASSWORD_DEFAULT);
+            $user->role = User::ADMINISTRATOR;
+            $user->is_active = 1;
+            $user->is_superuser = 1;
+
+            $user->save();
+
+            $io->success('Superadmin user created successfully.');
+            return Command::SUCCESS;
+        }
+        return Command::FAILURE;
     }
 }

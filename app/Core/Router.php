@@ -42,14 +42,6 @@ class Router
     }
 
     /**
-     * @return void
-     */
-    private function __clone()
-    {
-
-    }
-
-    /**
      * create a singleton instance pattern to instantiate only one object from this class
      * @return static|null
      */
@@ -111,19 +103,21 @@ class Router
         return static::getInstance()->addRoute(self::DELETE_METHOD, $path, $callback);
     }
 
-    public static function resource(string $name, string $controller): Router
+    public static function resource(string $name, string $controller, array $middleware = []): Router
     {
-        static::getInstance()->get("$name", [$controller, 'index']);
-        static::getInstance()->get("$name/create", [$controller, 'create']);
-        static::getInstance()->post("$name", [$controller, 'store']);
-        static::getInstance()->get("$name/{id}", [$controller, 'show']);
-        static::getInstance()->get("$name/{id}/edit", [$controller, 'edit']);
-        static::getInstance()->put("$name/{id}", [$controller, 'update']);
-        static::getInstance()->patch("$name/{id}", [$controller, 'update']);
-        static::getInstance()->delete("$name/{id}", [$controller, 'destroy']);
+
+        static::getInstance()->get("$name", [$controller, 'index'])->middleware($middleware);
+        static::getInstance()->get("$name/create", [$controller, 'create'])->middleware($middleware);
+        static::getInstance()->post("$name", [$controller, 'store'])->middleware($middleware);
+        static::getInstance()->get("$name/{id}", [$controller, 'show'])->middleware($middleware);
+        static::getInstance()->get("$name/{id}/edit", [$controller, 'edit'])->middleware($middleware);
+        static::getInstance()->put("$name/{id}", [$controller, 'update'])->middleware($middleware);
+        static::getInstance()->patch("$name/{id}", [$controller, 'update'])->middleware($middleware);
+        static::getInstance()->delete("$name/{id}", [$controller, 'destroy'])->middleware($middleware);
 
         return static::getInstance();
     }
+
 
 
     /**
@@ -279,20 +273,27 @@ class Router
      */
     private function handleRoute(array|callable $callback, array $middlewares): void
     {
-        $request = null;
         $request = new Request($this->args);
 
+        $next = function ($request) use ($callback) {
+            $this->handleCallback($callback, $request);
+        };
+
+        $middlewares = array_reverse($middlewares);
+
         foreach ($middlewares as $middleware) {
-            $instance = (new $middleware);
+            $instance = new $middleware();
             if ($instance instanceof MiddlewareInterface) {
-                $instance->handle($request, fn(Request $request) => $this->handleCallback($callback, $request));
-                return;
+                $nextMiddleware = $next;
+                $next = function ($request) use ($instance, $nextMiddleware) {
+                    $instance->handle($request, $nextMiddleware);
+                };
             } else {
                 throw new Exception("$middleware must be type of MiddlewareInterface interface.");
             }
         }
 
-        $this->handleCallback($callback, $request);
+        $next($request);
     }
 
 

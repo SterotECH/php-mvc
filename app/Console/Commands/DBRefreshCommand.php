@@ -3,13 +3,13 @@
 namespace App\Console\Commands;
 
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Attribute\AsCommand;
 
-#[AsCommand(name: "db:refresh")]
+#[AsCommand(name: 'db:refresh')]
 class DBRefreshCommand extends Command
 {
     protected static $defaultName = 'db:refresh';
@@ -25,9 +25,8 @@ class DBRefreshCommand extends Command
 
         $io->info('Refreshing database');
 
-        // Run down command
         $downCommand = $this->getApplication()->find('db:down');
-        $downArguments = [];
+        $downArguments = ['command' => 'db:down', '--force' => true];
         $downInput = new ArrayInput($downArguments);
         $downCommand->run($downInput, $output);
 

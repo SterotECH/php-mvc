@@ -7,7 +7,6 @@ class Model
 {
     use \App\Traits\Model;
 
-    private static string $lastQuery;
     protected static ?string $whereClause = null;
     protected static array $whereParams = [];
     protected static ?string $joinClause = null;

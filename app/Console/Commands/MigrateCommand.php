@@ -50,10 +50,10 @@ class MigrateCommand extends Command
                 $database->query($migration->up());
                 $database->query("INSERT INTO migrations (migration) VALUES ('$argument')");
                 $migrations[$argument] = 'applied';
-                file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';');
+                file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';' . PHP_EOL);
                 $io->text("Applied migration: $argument");
             } else {
-                $io->warning("Migration not found or already applied: $argument");
+                $io->text("Migration not found or already applied: $argument");
             }
         } else {
             foreach ($migrations as $className => $status) {
@@ -66,7 +66,7 @@ class MigrateCommand extends Command
                     file_put_contents($migrationsFile, '<?php return ' . var_export($migrations, true) . ';');
                     $io->text("Applied migration: $className");
                 } else {
-                    $io->warning("Migration already applied: $className");
+                    $io->text("Migration already applied: $className");
                 }
             }
         }

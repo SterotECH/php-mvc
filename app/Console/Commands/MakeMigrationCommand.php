@@ -17,8 +17,10 @@ class MakeMigrationCommand extends Command
 
   protected function configure()
   {
-    $this->setDescription('Create a new migration file.');
-    $this->addArgument('name', InputArgument::OPTIONAL, 'The name of the migration.');
+    $this->setDescription('Create a new migration file.')
+      ->addArgument('name', InputArgument::OPTIONAL, 'The name of the migration.')
+      ->setHelp('This command allows you to create a new migration file.')
+      ->setDescription('Create a new migration file.');
   }
 
   protected function execute(InputInterface $input, OutputInterface $output): int
@@ -76,7 +78,7 @@ PHP;
     }
     $migrations = include $migrationsFile;
     $migrations[$className] = 'unapplied';
-    file_put_contents($migrationsFile, '<?php ' . PHP_EOL . 'return ' . var_export($migrations, true) . ';');
+    file_put_contents($migrationsFile, '<?php ' . PHP_EOL . 'return ' . var_export($migrations, true) . ';'. PHP_EOL);
     $io->success("Migration file $migrationFile with class $className has been created successfully");
     return Command::SUCCESS;
   }

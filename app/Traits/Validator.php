@@ -45,7 +45,7 @@ trait Validator
 
     protected static function nullable(string $field): bool
     {
-        return !isset($field) || $field === '';
+        return empty($field);
     }
 
     public static function min($value, $min): bool
@@ -73,7 +73,7 @@ trait Validator
         return filter_var($value, FILTER_VALIDATE_URL);
     }
 
-    public static function date($value): bool
+    public static function date(string $value): bool
     {
         return (bool)strtotime($value);
     }
@@ -83,21 +83,30 @@ trait Validator
         return is_numeric($value);
     }
 
-    public static function between($value, array $params): bool
+    public static function between($value, array|string $params): bool
     {
+        if (is_string($params)){
+            $params = explode(',', $params);
+        }
         $min = $params[0];
         $max = $params[1];
 
         return $value >= $min && $value <= $max;
     }
 
-    public static function notIn($value, array $params): bool
+    public static function notIn($value, array|string $params): bool
     {
+        if (is_string($params)){
+            $params = explode(',', $params);
+        }
         return !in_array($value, $params);
     }
 
-    public static function in($value, array $params): bool
+    public static function in($value, array|string $params): bool
     {
+        if (is_string($params)){
+            $params = explode(',', $params);
+        }
         return in_array($value, $params);
     }
 
@@ -106,13 +115,19 @@ trait Validator
         return $value === $fieldToMatch;
     }
 
-    public static function different($value, array $params): bool
+    public static function different($value, array|string $params): bool
     {
+        if (is_string($params)){
+            $params = explode(',', $params);
+        }
         return $value !== $params[0];
     }
 
-    public static function notBetween($value, array $params): bool
+    public static function notBetween($value, array|string $params): bool
     {
+        if (is_string($params)){
+            $params = explode(',', $params);
+        }
         $min = $params[0];
         $max = $params[1];
 
@@ -137,15 +152,14 @@ trait Validator
     {
         $db = Database::getInstance();
 
-        $result = $db->query("SELECT COUNT(*) as count FROM $table WHERE $column = ?", [$value])->find();
-
+        $result = $db->query("SELECT COUNT(*) AS count FROM $table WHERE $column = ?", [$value])->find();
         return $result && $result->count > 0;
     }
 
     public static function passwordVerify(string $password, string $username): bool
     {
         $config = require base_path('/config/auth.php');
-        $user = User::find('email',$username, ['password']);
+        $user = User::find('email', $username, ['password']);
         if ($user && password_verify($password, $user->{$config['database']['password']})) {
             return true;
         }
@@ -162,6 +176,24 @@ trait Validator
     {
         return self::file($value) && @getimagesize($value);
     }
+
+    public static function mimes($value, array|string $mimeTypes): bool
+    {
+        if (is_string($mimeTypes)){
+            $mimeTypes = explode(',', $mimeTypes);
+        }
+        $info = finfo_open(FILEINFO_MIME_TYPE);
+        $fileMimeType = finfo_file($info, $value);
+        finfo_close($info);
+
+        return in_array($fileMimeType, $mimeTypes);
+    }
+
+    public static function svg($value): bool
+    {
+        return self::mimes($value, ['image/svg+xml']);
+    }
+
 
     public static function object($value): bool
     {
@@ -209,64 +241,8 @@ trait Validator
         return $date && $date->format($format) === $value;
     }
 
-    protected function addError(string $field, string $rule, ?string $message = null, ?array $params = null): void
+    public static function time($value): bool
     {
-        $fieldName = formatColumnName($field);
-
-        $defaultMessages = [
-            'required' => "$fieldName is required.",
-            'email' => "$fieldName must be a valid email address.",
-            'min' => "$fieldName must be at least :min characters.",
-            'max' => "$fieldName may not be greater than :max characters.",
-            'regex' => "$fieldName is invalid.",
-            'nullable' => "$fieldName is required.",
-            'string' => "$fieldName must be a string.",
-            'url' => "$fieldName must be a valid URL.",
-            'phone' => "$fieldName must be a valid phone number.",
-            'password' => "$fieldName must be a valid password.",
-            'fileType' => "$fieldName must be a valid file type.",
-            'maxFileSize' => "$fieldName must be a valid file size.",
-            'unique' => "$fieldName must be unique.",
-            'exists' => "No matching records found",
-            'same' => "$fieldName must be same.",
-            'different' => "$fieldName must be different.",
-            'in' => "$fieldName must be in.",
-            'notIn' => "$fieldName must not be in.",
-            'between' => "$fieldName must be between.",
-            'notBetween' => "$fieldName must not be between.",
-            'date' => "$fieldName must be a date.",
-            'dateFormat' => "$fieldName must be a date format.",
-            'before' => "$fieldName must be before.",
-            'after' => "$fieldName must be after.",
-            'beforeOrEqual' => "$fieldName must be before or equal.",
-            'afterOrEqual' => "$fieldName must be after or equal.",
-            'boolean' => "$fieldName must be a boolean.",
-            'numeric' => "$fieldName must be a numeric.",
-            'integer' => "$fieldName must be an integer.",
-            'float' => "$fieldName must be a float.",
-            'array' => "$fieldName must be an array.",
-            'object' => "$fieldName must be an object.",
-            'file' => "$fieldName must be a file.",
-            'image' => "$fieldName must be an image.",
-            'alpha' => "$fieldName must be alpha.",
-            'alphaNum' => "$fieldName must be alpha numeric.",
-            'alphaDash' => "$fieldName must be alpha dash.",
-            'alphaNumDash' => "$fieldName must be alpha numeric dash.",
-            'alphaNumSpace' => "$fieldName must be alpha numeric space.",
-            'alphaNumDashSpace' => "$fieldName must be alpha numeric dash space.",
-            'alphaSpace' => "$fieldName must be alpha space.",
-            'alphaDashSpace' => "$fieldName must be alpha dash space.",
-            'passwordVerify' => "No Matching account found for that email and password"
-        ];
-
-        $message = $message ?? $defaultMessages[$rule] ?? "$fieldName is invalid.";
-
-        if ($params !== null) {
-            foreach ($params as $key => $value) {
-                $message = str_replace(":$key", $value, $message);
-            }
-        }
-
-        $this->errors[$field][] = $message;
+        return strtotime($value) !== false;
     }
 }

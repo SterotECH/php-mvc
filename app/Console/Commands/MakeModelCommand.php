@@ -36,19 +36,17 @@ class MakeModelCommand extends Command
             return Command::FAILURE;
         }
 
-        $modelContent = <<<PHP
+        $modelContent =
+        <<<PHP
             <?php
 
             namespace App\Models;
 
-            use DateTime;
-
             class $modelName extends Model
             {
-                protected static ?string \$table = '$modelName';
 
                 protected static array \$fields = [
-
+                    'id'
                 ];
             }
         PHP;

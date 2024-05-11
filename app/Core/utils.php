@@ -40,7 +40,7 @@ function env($key, $default = null): mixed
 }
 
 
-function dd(...$data): void
+function dd($data): void
 {
     if (env('APP_ENV') !== 'development') {
         return;
@@ -77,10 +77,6 @@ function base_path($path): string
     return BASE_PATH . $path;
 }
 
-function findController(string $controllerName): ?string
-{
-    return base_path('/app/Controller/' . $controllerName . '.php');
-}
 
 /**
  * @param string $path
@@ -134,11 +130,11 @@ function uriContains(string $value): bool
  * @param string|null $description
  * @return void
  */
-function abort(int $statusCode = Response::HTTP_NOT_FOUND, string|null $description = null): void
+function abort(int $statusCode = Response::HTTP_NOT_FOUND, string|null|PDOException $description = null, string $view = 'status/code' ): void
 {
     http_response_code($statusCode);
 
-    view('status/code', [
+    view("$view", [
         'message' => Response::getStatusMessage($statusCode),
         'statusCode' => $statusCode,
         'description' => $description
@@ -147,15 +143,12 @@ function abort(int $statusCode = Response::HTTP_NOT_FOUND, string|null $descript
 }
 
 
-function url($path): string
-{
-    return "http://" . $_SERVER['HTTP_HOST'] . $path;
-}
-
 function asset($path): string
 {
-    return rtrim($_SERVER['DOCUMENT_ROOT'] . '/resources/' . ltrim($path, '/'), '/');
+    $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    return $protocol . $_SERVER['HTTP_HOST'] . $path;
 }
+
 
 if (!function_exists('class_basename')) {
     /**
@@ -172,9 +165,10 @@ if (!function_exists('class_basename')) {
     }
 }
 
-function redirect($url): void
+function redirect($url, int $status = Response::HTTP_MOVED_PERMANENTLY): void
 {
     header("Location: $url");
+    http_response_code($status);
     exit();
 }
 
@@ -183,65 +177,6 @@ function old(string $key, mixed $default = '')
     return Session::get('old')[$key] ?? $default;
 }
 
-function showToast($message, $color, $type): void
-{
-    if (is_array($message)) {
-        $errorMessages = '';
-        foreach ($message as $error) {
-            $errorMessages .= <<< HTML
-                                <div id="toast" class="flex items-center p-4 mb-4 text-sm text-$color-800 rounded-lg bg-$color-50 dark:bg-gray-800 dark:text-$color-400 z-50 transition-all" role="alert">
-                                    <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                                    </svg>
-                                    <span class="sr-only">$type</span>
-                                <div>
-                               $error
-                            </div>
-                            </div>
-                            HTML;
-        }
-                echo $errorMessages;
-    } else {
-        echo <<< HTML
-                                <div id="toast" class="flex items-center p-4 mb-4 text-sm text-$color-800 rounded-lg bg-$color-50 dark:bg-gray-800 dark:text-$color-400 z-50 transition-all" role="alert">
-                                    <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                                    </svg>
-                                    <span class="sr-only">$type</span>
-                                <div>
-                               $message
-                            </div>
-                            </div>
-                            HTML;
-    }
-    echo "<script >
-              const toast = document . getElementById('toast');
-              toast . classList . remove('hidden');
-              setTimeout(() => {
-            toast . classList . add('hidden');
-            }, 3000);
-        </script > ";
-}
-
-function errorToast($message): void
-{
-    showToast($message, 'red', 'error');
-}
-
-function successToast($message): void
-{
-    showToast($message, 'green', 'success');
-}
-
-function warningToast($message): void
-{
-    showToast($message, 'amber', 'danger');
-}
-
-function infoToast($message): void
-{
-    showToast($message, 'blue', 'info');
-}
 
 function displayError(array|string $errors): void
 {
@@ -259,9 +194,7 @@ function displaySuccess(string $message): string
     return "<p class='mt-2 text-sm text-green-600>$message</p>";
 }
 
-/**
- * @throws RandomException
- */
+
 function csrf_field(): string
 {
     if (!isset($_SESSION['csrf_token'])) {
@@ -283,3 +216,60 @@ function formatColumnName(string $columnName): string
     return ucwords(str_replace('_', ' ', $columnName));
 }
 
+
+function resource($template){
+    include base_path("resources/views/$template.tpl.php");
+}
+
+function url(string $path, array $params = []){
+    $url = rtrim($_SERVER['REQUEST_URI'], '/') . '/' . ltrim($path, '/');
+    if (!empty($params)) {
+        $url .= '?' . http_build_query($params);
+    }
+    return $url;
+}
+
+
+function getHumanReadableDate($dateString)
+{
+    $date = new DateTime($dateString);
+
+    $today = new DateTime();
+
+
+    $diff = $date->diff($today);
+
+    if ($diff->days == 0) {
+        return 'today';
+    } elseif ($diff->days == 1) {
+        return 'tomorrow';
+    } elseif ($diff->days == -1) {
+        return 'yesterday';
+    } elseif ($diff->days < 7 && $diff->days > -7) {
+        return $date->format('l'); // Day of the week
+    } else {
+        return $date->format('Y-m-d'); // Date if more than a week
+    }
+}
+
+function getHumanReadableTime($timeString)
+{
+    $time = new DateTime($timeString);
+
+    $today = new DateTime();
+
+    $diff = $time->diff($today);
+
+    if ($diff->days == 0) {
+        return $time->format('H:i');
+    } else {
+        return $time->format('Y-m-d H:i');
+    }
+}
+
+function component(string $component, array $data = [])
+{
+    extract($data);
+
+    require base_path("resources/views/components/$component.cmp.php");
+}

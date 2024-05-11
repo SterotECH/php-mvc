@@ -2,7 +2,6 @@
 
 use App\Core\Router;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\NotesController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\AuthMiddleware;
 use App\Http\Middleware\GustMiddleware;
@@ -15,4 +14,3 @@ Router::post('/auth/register', [HomeController::class, 'register'])->middleware(
 Router::delete('/auth/logout', [HomeController::class, 'logout']);
 Router::get('/auth/forgot-password', [HomeController::class, 'render_forgot_password']);
 Router::resource('/users',UserController::class);
-Router::resource('/notes', NotesController::class);

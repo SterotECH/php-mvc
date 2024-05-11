@@ -48,6 +48,7 @@ class MakeControllerCommand extends Command
 
     private function controllerContent(string $modelName, $controllerName): string
     {
+        $view = strtolower($modelName);
         return <<<PHP
         <?php
 
@@ -55,155 +56,73 @@ class MakeControllerCommand extends Command
 
         use App\Models\\$modelName;
         use App\Core\Request;
-        use App\Core\Session;
+        use App\Core\Response;
+        use App\Core\Router;
 
         class $controllerName extends Controller
         {
             public function index(): void
             {
-                /*
-                 * Implement index method
-                 *
-                 * This method is called when the user visits the route /users
-                 * it acts as the home page if using the resource controller
-                 * remember to use the render method to render the view
-                 * and pass the data to the view
-                 *
-                 * Example:
-                 *
-                 * \$users = User::all();
-                 * \$this->render('users', [
-                 *  'users' => \$users
-                 * ]);
-                 *
-                 * TODO: register the router for the controller in the routes directory
-                 * all web route can be found in the `routes/web.php` file
-                 *
-                 * Example:
-                 *
-                 * \`Router::resource('/users', '$controllerName::class')`;
-                 *
-                 * or to register a single route use
-                 * \`Router::get('/users', [$controllerName, 'index'])`;
-                 *
-                */
-
+                Response::view('$view/index', [
+                    '$view\\s'=> $modelName::all()
+                ]);
             }
 
             public function create(): void
             {
-                /*
-                 * Implement create method
-                 * it uses `GET` method to render the create form
-                 * this method is used to render the create form and render errors from the
-                 * session if the is any
-                 * Example:
-                 *
-                 * \$this->render('users/create',[
-                 *  'errors' => Session::get('errors')
-                 * ]);
-                */
+                Response::view('$view/create',[
+                    'errors' => Session::get('errors')
+                ]);
             }
 
             public function store(Request \$request): void
             {
-                /*
-                * Implement store method
-                * it uses `POST` method to store the data from the create form
-                * this method is used to store the data from the create form
-                * this method is responsible for creating or storing the user into the database
-                * Example:
-                *   \$this->validate((array) \$request->all(), [
-                *     'name' => 'required|string|max:255',
-                *     'email' => 'required|string|email|max:255|unique:users,email',
-                *     'password' => 'required|string|min:6|confirmed',
-                *   ]);
-                *
-                *   \$user = new User();
-                *   \$user->name = \$request-input('name');
-                *   \$user->email = \$request-input('email');
-                *   \$user->password = \$request-input('password');
-                *   \$user = \$user->save()
-                *
-                *   \$this->redirect('/users');
-                *
-                */
+                \$$view = new $modelName();
+
+                \$$view\\->save();
+
+                Response::redirect(Router::previousUrl());
+
             }
 
             public function show(Request \$request): void
             {
-                /* Implement show method
-                * it uses `GET` method to render the show page
-                * this method is used to render the show page and render errors from the
-                * session if the is any
-                * in other words it is used to view a record
-                *
-                * Example:
-                * \$id = \$request->params()->id;
-                * \$user = User::getById(\$id); // if we use id
-                * \$this->render("users/show", [
-                *    "user" => \$user,
-                *     "errors" => Session::get('errors')
-                *  ]);
-                *
-                */
+                \$id = \$request->params()->id;
+
+                \$$view = $modelName::findById(\$id);
+                Response::view('$view/show', [
+                    '$view' => \$$view
+                ]);
             }
 
             public function edit(Request \$request): void
             {
-                /* Implement edit method
-                * it uses `GET` method to render the edit form
-                * this method is used to render the edit form and render errors from the
-                * session if the is any
-                * in other words it is used to edit a record
-                *
-                * Example:
-                *   \$id = \$request->params()->id;
-                *   \$user = User::getById(\$id);
-                *
-                * \$this->render('users/edit', [
-                *    'user' => \$user,
-                *    'errors' => Session::get('errors')
+                \$id = \$request->params()->id;
+                \$$view = $modelName::findById(\$id);
+
+                Response::view('$view/edit', [
+                    '$view' => \$$view,
                 ]);
-                */
             }
 
             public function update(Request \$request): void
             {
-                /* Implement update method
-                * it uses `PUT` or `PATCH` method to update the data from the edit form
-                * this method is used to update the data from the edit form
-                * this method is responsible for updating or storing the user into the database
-                * Example:
-                * \$this->validate((array)\$request->all(), [
-                *     'name' => 'required|string|max:255',
-                *     'email' => 'required|string|email|max:255',
-                *     'password' => 'required|string|min:6|confirmed',
-                * ])
-                *
-                * \$user = User::getById(\$request->params()->id);
-                * \$user = new User();
-                * \$user->name = \$request->input('name');
-                * \$user->email = \$request->input('email');
-                * \$user->password = \$request->input('password');
-                * \$user = \$user->save()
-                *   if (\$user){
-                *    redirect("/users/{\$user[0]->id}/show");
-                *  }
-                */
+                \$request->validate([]);
+                \$$view = new $modelName();
+
+                \$id = \$request->params()->id;
+                \$$view\\->id = \$id;
+
+                \$$view\\->save();
+
+                Response::redirect(Router::previousUrl());
             }
 
             public function destroy(Request \$request): void
             {
-                /*\ Implement destroy method
-                *   This method is used to delete a record from the database
-                *   we begin by fetching the record from the database using the query params
-                *
-                *   \$user_id = \$request->params->id;
-                *   \$User::delete(\$user_id);
-                *
-                *
-                */
+                $modelName::delete(\$request->params()->id);
+
+                Response::redirect(Router::previousUrl());
             }
         }
         PHP;

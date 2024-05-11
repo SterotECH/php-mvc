@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Core\Authenticator;
 use App\Models\User;
 use App\Core\Request;
 use App\Core\Session;
+use App\Core\Response;
+use App\Core\Authenticator;
 
 class UserController extends Controller
 {
     public function index(): void
     {
-        $this->render('users/index', [
+        Response::view('users/index', [
             'users' => User::all(),
             'heading' => 'Users'
         ]);
@@ -19,7 +20,7 @@ class UserController extends Controller
 
     public function create(): void
     {
-        $this->render('users/create', [
+        Response::view('users/create', [
             'heading' => 'Create User',
             'errors' => Session::get('errors')
         ]);
@@ -27,7 +28,7 @@ class UserController extends Controller
 
     public function store(Request $request): void
     {
-        $this->validate((array)$request->all(), [
+        $request->validate([
             'username' => 'required|string|min:2|max:16|unique:users,username',
             'first_name' => 'required|string|min:2|max:100',
             'last_name' => 'required|string|min:2|max:100',
@@ -41,7 +42,7 @@ class UserController extends Controller
         Session::flash('success',"{$user->username} account has being created successfully");
 
         if ($user) {
-            redirect('/users');
+            Response::redirect('/users');
         }
     }
 
@@ -50,7 +51,7 @@ class UserController extends Controller
     {
         $id = $request->params()->id;
         $user = User::findById($id, columns:['id', 'first_name', 'last_name', 'phone_number', 'other_name', 'email']);
-        $this->render("users/show", [
+        Response::view("users/show", [
             "user" => $user,
             "heading" => "{$user['first_name']} {$user['last_name']}"
         ]);
@@ -61,7 +62,7 @@ class UserController extends Controller
         $id = $request->params()->id;
         $user = User::findById($id, columns:['id', 'first_name', 'last_name', 'phone_number', 'other_name', 'email']);
 
-        $this->render('users/edit', [
+        Response::view('users/edit', [
             'user' => $user,
             "heading" => "{$user['first_name']} {$user['last_name']}"
         ]);
@@ -69,7 +70,7 @@ class UserController extends Controller
 
     public function update(Request $request): void
     {
-        $this->validate((array)$request->all(), [
+        $request->validate([
             'username' => 'required|string|min:2|max:6',
             'first_name' => 'required|string|min:2|max:100',
             'last_name' => 'required|string|min:2|max:100',
@@ -85,14 +86,14 @@ class UserController extends Controller
         $user->username = $request->input('username');
         $user->email = $request->input('email');
         $user->phone_number = $request->input('phone_number');
-        $user->first_name = $request->input('first_name');;
+        $user->first_name = $request->input('first_name');
         $user->last_name = $request->input('last_name');
         $user->other_name = $request->input('other_name') ?? null;
 
         $user = $user->save();
 
         if ($user) {
-            redirect("/users/{$user[0]->id}/show");
+            Response::redirect("/users/{$user[0]->id}/show");
         }
     }
 
@@ -102,6 +103,6 @@ class UserController extends Controller
 
         User::delete($id);
 
-        redirect('/');
+        Response::redirect('/');
     }
 }

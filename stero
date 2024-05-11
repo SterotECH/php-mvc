@@ -30,11 +30,6 @@ ini_set('display_errors', '1');
  */
 define('STERO', true);
 
-// Path to the front controller
-// define('FCPATH', __DIR__ . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR);
-
-// Ensure the current directory is pointing to the front controller's directory
-// chdir(FCPATH);
 
 const BASE_PATH = __DIR__;
 
@@ -49,6 +44,7 @@ use App\Console\Commands\DBRefreshCommand;
 use App\Console\Commands\MakeModelCommand;
 use Symfony\Component\Console\Application;
 use App\Console\Commands\AlterTableCommand;
+use App\Console\Commands\ApplyViewsCommand;
 use App\Console\Commands\MakeSeederCommand;
 use App\Console\Commands\MakeCommandCommand;
 use App\Console\Commands\MakeMigrationCommand;
@@ -56,8 +52,10 @@ use Symfony\Component\Console\Input\ArgvInput;
 use App\Console\Commands\MakeControllerCommand;
 use App\Console\Commands\CreateSuperuserCommand;
 use App\Console\Commands\CreateUserCommand;
+use App\Console\Commands\CreateViewCommand;
 use App\Console\Commands\DBSeedCommand;
 use App\Console\Commands\DeleteMigrationCommand;
+use App\Console\Commands\DropViewCommand;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
 $app = new Application();
@@ -76,13 +74,16 @@ if ($command === 'completion') {
 
 // commands
 $application->add(new AlterTableCommand());
+$application->add(new ApplyViewsCommand());
 $application->add(new CreateSuperuserCommand());
 $application->add(new CreateUserCommand());
+$application->add(new CreateViewCommand());
 $application->add(new DBDownCommand());
 $application->add(new DBRefreshCommand());
 $application->add(new DBStatusCommand());
 $application->add(new DBSeedCommand());
 $application->add(new DeleteMigrationCommand());
+$application->add(new DropViewCommand());
 $application->add(new MakeControllerCommand());
 $application->add(new MakeCommandCommand());
 $application->add(new MigrateCommand());

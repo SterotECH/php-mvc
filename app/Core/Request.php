@@ -2,13 +2,17 @@
 
 namespace App\Core;
 
-use App\Core\Interface\FormRequestInterface;
+use Exception;
+use App\Traits\HandlesValidation;
 use App\Core\Interface\RequestInterface;
+use App\Core\Interface\FormRequestInterface;
 
 session_start();
 
 class Request implements RequestInterface
 {
+    use HandlesValidation;
+
     private ?object $server = null;
     private array $args = [];
     private array $files = [];
@@ -28,15 +32,6 @@ class Request implements RequestInterface
 
         $this->args = $args;
         $this->files = $_FILES;
-    }
-
-    /**
-     * @param FormRequestInterface $request
-     * @return bool
-     */
-    public function validator(FormRequestInterface $request): mixed
-    {
-        return $request->validate($this);
     }
 
     /**
@@ -214,16 +209,16 @@ class Request implements RequestInterface
         return json_encode($this->server);
     }
 
-    public function file(string $name): ?array
+    public function hasFile(string $name): ?array
     {
         return isset($this->files[$name]) ? $this->files[$name] : null;
     }
 
-    public function uploadFile(string $name, string $destination = '/images'): ?string
+    public function uploadFile(string $name, string $destination = '/image', $mimes = ['jpeg', 'jpg', 'png', 'gif'], int $max_size = 2048): ?string
     {
-        $file = $this->file($name);
+        $file = $this->hasFile($name);
 
-        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+        if (!$this->validateFile($file, $mimes, $max_size)) {
             return null;
         }
 
@@ -233,10 +228,12 @@ class Request implements RequestInterface
         }
 
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $fileName = uniqid('file_') . '.' . $extension;
+        $fileName = uniqid('file_', true) . '.' . $extension;
         $filePath = $uploadDir . '/' . $fileName;
 
-        move_uploaded_file($file['tmp_name'], $filePath);
+        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            return null;
+        }
 
         return $destination . '/' . $fileName;
     }
